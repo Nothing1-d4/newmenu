@@ -9367,6 +9367,235 @@ function UI:CreateMoonCard(x, y, w)
 end
 
 -- =========================================================================
+-- MOON TERMINAL (ADDED TO THE CURRENT FAIRYGUI SCRIPT)
+-- =========================================================================
+UI.Terminal = nil
+UI.TerminalInput = nil
+UI.TerminalInputView = nil
+UI.TerminalHistory = {}
+UI.TerminalVisible = false
+UI.TerminalOutput = nil
+
+local TERMINAL_GREEN = { r = 0.10, g = 1.00, b = 0.28, a = 1.0 }
+local TERMINAL_DARK  = { r = 0.005, g = 0.012, b = 0.008, a = 1.0 }
+local TERMINAL_BORDER = { r = 0.05, g = 0.75, b = 0.20, a = 1.0 }
+
+-- Only explicitly registered commands can run. No arbitrary Lua execution.
+local TerminalCommands = {
+    dffz = function() dffz() end,
+    qkwjbb = function() qkwjbb() end,
+    zdzl = function() zdzl() end,
+    gbtq1 = function() gbtq1() end,
+    gbtq2 = function() gbtq2() end,
+    gbtq3 = function() gbtq3() end,
+    gbtq4 = function() gbtq4() end,
+    dtzl = function() dtzl() end,
+    jzgj = function() jzgj() end,
+    fzbr = function() fzbr() end,
+    ycbr = function() ycbr() end,
+    fzbk = function() fzbk() end,
+    czbbd = function() czbbd() end,
+    djdz = function() djdz() end,
+    hdqp = function() hdqp() end,
+    zstx = function() zstx() end,
+    fjhmd = function() fjhmd() end,
+    help = function()
+        UI:TerminalWrite("COMMANDS: help, clear, dffz, qkwjbb, zdzl, gbtq1-4, dtzl, jzgj, fzbr, ycbr, fzbk, czbbd, djdz, hdqp, zstx, fjhmd")
+    end,
+    clear = function()
+        UI.TerminalHistory = {}
+        UI:TerminalRefresh()
+    end
+}
+
+function UI:TerminalWrite(line)
+    table.insert(self.TerminalHistory, tostring(line or ""))
+    while #self.TerminalHistory > 13 do
+        table.remove(self.TerminalHistory, 1)
+    end
+    self:TerminalRefresh()
+end
+
+function UI:TerminalRefresh()
+    if self.TerminalOutput and not tolua.isnull(self.TerminalOutput) then
+        self.TerminalOutput:setText(table.concat(self.TerminalHistory, "\n"))
+    end
+end
+
+function UI:TerminalReadInput()
+    local input = self.TerminalInput
+    if not input then return nil end
+    local ok, value = pcall(function() return input:getText() end)
+    if ok and type(value) == "string" then return value end
+    local view = self.TerminalInputView
+    if view then
+        ok, value = pcall(function() return view:getText() end)
+        if ok and type(value) == "string" then return value end
+    end
+    return nil
+end
+
+function UI:TerminalClearInput()
+    if self.TerminalInput then
+        pcall(function() self.TerminalInput:setText("") end)
+    end
+    if self.TerminalInputView then
+        pcall(function() self.TerminalInputView:setText("") end)
+    end
+end
+
+function UI:TerminalExecute(command)
+    command = tostring(command or "")
+    command = command:match("^%s*(.-)%s*$") or ""
+    if command == "" then return end
+
+    self:TerminalWrite("> " .. command)
+    local fn = TerminalCommands[string.lower(command)]
+    if not fn then
+        self:TerminalWrite("ERROR: unknown command: " .. command)
+        return
+    end
+
+    local ok, err = pcall(fn)
+    if ok then
+        self:TerminalWrite("[OK] command completed")
+    else
+        self:TerminalWrite("[ERROR] " .. tostring(err))
+    end
+    self:TerminalClearInput()
+end
+
+function UI:CreateTerminal()
+    if self.Terminal and not tolua.isnull(self.Terminal) then return end
+
+    local root = GRoot:getInstance()
+    if not root then return end
+
+    local panel = GComponent:create()
+    panel:setSize(620, 420)
+    panel:setPosition(220, 115)
+    panel:setTouchable(true)
+    pcall(function() panel:setSortingOrder(100010) end)
+
+    local bg = GGraph:create()
+    bg:drawRect(620, 420, 2, TERMINAL_BORDER, TERMINAL_DARK)
+    panel:addChild(bg)
+
+    local title = GBasicTextField:create()
+    title:setSize(580, 28)
+    title:setPosition(18, 8)
+    title:setFontSize(18)
+    title:setColor(TERMINAL_GREEN)
+    title:setText("MOON // SYSTEM TERMINAL")
+    title:setTouchable(false)
+    panel:addChild(title)
+
+    local divider = GGraph:create()
+    divider:drawRect(584, 1, 0, TERMINAL_GREEN, TERMINAL_GREEN)
+    divider:setPosition(18, 40)
+    panel:addChild(divider)
+
+    local outputBg = GGraph:create()
+    outputBg:drawRect(584, 300, 1, TERMINAL_BORDER, TERMINAL_DARK)
+    outputBg:setPosition(18, 50)
+    panel:addChild(outputBg)
+
+    local output = GBasicTextField:create()
+    output:setSize(560, 282)
+    output:setPosition(30, 58)
+    output:setFontSize(13)
+    output:setColor(TERMINAL_GREEN)
+    output:setTouchable(false)
+    panel:addChild(output)
+    self.TerminalOutput = output
+
+    local inputBg = GGraph:create()
+    inputBg:drawRect(470, 42, 1, TERMINAL_BORDER, TERMINAL_DARK)
+    inputBg:setPosition(18, 365)
+    panel:addChild(inputBg)
+
+    local prompt = GBasicTextField:create()
+    prompt:setSize(22, 30)
+    prompt:setPosition(28, 371)
+    prompt:setFontSize(17)
+    prompt:setColor(TERMINAL_GREEN)
+    prompt:setText(">")
+    prompt:setTouchable(false)
+    panel:addChild(prompt)
+
+    -- FairyGUI text input. A separate RUN button is provided as a fallback
+    -- submit mechanism because the Mini World Return-event callback signature
+    -- is not established by the supplied API list.
+    local inputOK, input = pcall(function() return GTextInput:create() end)
+    if inputOK and input then
+        self.TerminalInput = input
+        pcall(function() input:setPlaceHolder("enter command...") end)
+        pcall(function() input:setNeedResponseReturn(true) end)
+        pcall(function() input:setMaxLength(120) end)
+        local viewOK, view = pcall(function() return input:getFuiInput() end)
+        if viewOK and view then
+            self.TerminalInputView = view
+            pcall(function() view:setSize(420, 30) end)
+            pcall(function() view:setPosition(55, 371) end)
+            pcall(function() view:setTouchable(true) end)
+            panel:addChild(view)
+        else
+            self:TerminalWrite("[WARN] GTextInput view unavailable")
+        end
+    else
+        self:TerminalWrite("[WARN] GTextInput could not be created")
+    end
+
+    local runButton = GComponent:create()
+    runButton:setSize(104, 42)
+    runButton:setPosition(498, 365)
+    runButton:setTouchable(true)
+    local runBg = GGraph:create()
+    runBg:drawRect(104, 42, 1, TERMINAL_BORDER, { r = 0.01, g = 0.06, b = 0.02, a = 1 })
+    runButton:addChild(runBg)
+    local runLabel = GBasicTextField:create()
+    runLabel:setSize(100, 30)
+    runLabel:setPosition(10, 7)
+    runLabel:setFontSize(14)
+    runLabel:setColor(TERMINAL_GREEN)
+    runLabel:setText("EXECUTE")
+    runLabel:setTouchable(false)
+    runButton:addChild(runLabel)
+    runButton:addEventListener(UIEventType_Click, function()
+        local command = self:TerminalReadInput()
+        if command == nil then
+            self:TerminalWrite("[ERROR] Input text getter is not available in this binding")
+        else
+            self:TerminalExecute(command)
+        end
+    end)
+    panel:addChild(runButton)
+
+    root:addChild(panel)
+    self.Terminal = panel
+    panel:setVisible(false)
+    self.TerminalHistory = {
+        "MOON TERMINAL v1.0",
+        "SYSTEM ONLINE.",
+        "Type help for registered commands."
+    }
+    self:TerminalRefresh()
+end
+
+function UI:ToggleTerminal()
+    if not self.Terminal or tolua.isnull(self.Terminal) then
+        self:CreateTerminal()
+    end
+    if not self.Terminal or tolua.isnull(self.Terminal) then return end
+
+    self.TerminalVisible = not self.TerminalVisible
+    self.Terminal:setVisible(self.TerminalVisible)
+    if self.TerminalVisible and self.TerminalInput then
+        pcall(function() self.TerminalInput:setFocus() end)
+    end
+end
+
+-- =========================================================================
 -- ĐIỀU KHIỂN ZOOM / ẨN HIỆN / RESET VỊ TRÍ
 -- =========================================================================
 function UI:SetZoom(delta)
@@ -9404,6 +9633,14 @@ function UI:ResetPositions()
 end
 
 function UI:Destroy()
+    if self.Terminal and not tolua.isnull(self.Terminal) then
+        pcall(function() self.Terminal:removeFromParent() end)
+    end
+    self.Terminal = nil
+    self.TerminalInput = nil
+    self.TerminalInputView = nil
+    self.TerminalOutput = nil
+    self.TerminalVisible = false
     CleanupAllMoonUI()
     self.cards = {}
 end
@@ -9492,6 +9729,7 @@ function UI:Init()
         w = cardW,
         accentColor = { r = 0.10, g = 0.82, b = 0.65, a = 1.0 },
         items = {
+            { name = "SYSTEM TERMINAL", func = function() UI:ToggleTerminal() end },
             { name = "Xóa sạch túi đồ người chơi", func = qkwjbb },
             { name = "Buộc người chơi bò xuống", func = zdzl },
             { name = "Đổi thời tiết (nắng)", func = gbtq1 },
@@ -9650,6 +9888,45 @@ threadpool:work(function()
             UI:Toggle()
         elseif not isDown and rctrlLastState then
             rctrlLastState = false
+        end
+    end
+end)
+
+-- =========================================================================
+-- RIGHT SHIFT (161) TOGGLE TERMINAL; RIGHT CTRL STILL TOGGLES MAIN MENU
+-- =========================================================================
+local function CheckRightShiftDown()
+    if CommonUtil and CommonUtil.GetAsyncKeyState then
+        local ok, down = pcall(function() return CommonUtil:GetAsyncKeyState(161) end)
+        if ok and down then return true end
+    end
+    if CurMainPlayer and CurMainPlayer.getPCControl then
+        local ok, pcCtrl = pcall(function() return CurMainPlayer:getPCControl() end)
+        if ok and pcCtrl and pcCtrl.GetKey then
+            local ok2, down = pcall(function() return pcCtrl:GetKey(161) end)
+            if ok2 and down then return true end
+        end
+    end
+    if GetInst then
+        local okInst, ugc = pcall(function() return GetInst("UGCCommon") end)
+        if okInst and ugc and ugc.GetKeyCodeDown then
+            local ok, down = pcall(function() return ugc:GetKeyCodeDown(161) end)
+            if ok and down then return true end
+        end
+    end
+    return false
+end
+
+threadpool:work(function()
+    local lastState = false
+    while _G.MoonUI_SessionId == currentSessionId do
+        threadpool:wait(0.04)
+        local isDown = CheckRightShiftDown()
+        if isDown and not lastState then
+            lastState = true
+            UI:ToggleTerminal()
+        elseif not isDown then
+            lastState = false
         end
     end
 end)
