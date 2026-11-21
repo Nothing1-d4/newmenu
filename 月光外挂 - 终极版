@@ -4379,6 +4379,145 @@ function qcwj()
     end, "Xóa người chơi")
 end
 
+
+function SendSelectedPlayerInfo()
+
+    ShowPlayerList(function(uin)
+
+        local targetUin = uin
+
+        local function sendYellow(message)
+            local tdata = {
+                [1] = "chat",
+                [2] = "sendChat",
+                [3] = {"#Y" .. tostring(message), 1, 0}
+            }
+
+            ScriptSupportTask:reportTaskToHost(
+                SSTASKID.HOST_BordCast,
+                tdata
+            )
+        end
+
+        local function getPlayerName(targetUin)
+            local count = ClientCurGame:getNumPlayerBriefInfo() or 0
+
+            for i = 1, count do
+                local info = ClientCurGame:getPlayerBriefInfo(i - 1)
+
+                if info and info.uin == targetUin
+                and info.nickname then
+                    return info.nickname
+                end
+            end
+
+            if GameVM and GameVM.Player then
+                local _, name = GameVM.Player:getNickname(targetUin)
+                return name or "N/A"
+            end
+
+            return "N/A"
+        end
+
+        local function getTargetPlayer(targetUin)
+            local count = ClientCurGame:requireArrayOfPlayers(-1, -1)
+
+            for i = 1, count do
+                local player = ClientCurGame:getIthPlayerInArray(i - 1)
+
+                if player and player:getUin() == targetUin then
+                    return player
+                end
+            end
+
+            return nil
+        end
+
+        threadpool:work(function()
+
+            sendYellow("Selected Player Info")
+
+            threadpool:wait(1)
+
+            sendYellow("UIN: " .. tostring(targetUin))
+
+            threadpool:wait(1)
+
+            sendYellow("Name: " .. tostring(getPlayerName(targetUin)))
+
+            threadpool:wait(1)
+
+            local targetPlayer = getTargetPlayer(targetUin)
+
+            local positionText = "N/A"
+
+            if targetPlayer then
+                local x, y, z = targetPlayer:getPosition(0, 0, 0)
+
+                positionText =
+                    tostring(x / 100) .. ", " ..
+                    tostring(y / 100) .. ", " ..
+                    tostring(z / 100)
+            end
+
+            sendYellow("Position: " .. positionText)
+
+            threadpool:wait(1)
+
+            sendYellow("Max HP: N/A")
+
+            threadpool:wait(1)
+
+            local currentHP = "N/A"
+
+            if GameVM and GameVM.Trigger
+            and GameVM.Trigger.Player then
+
+                pcall(function()
+                    trigger()
+
+                    currentHP =
+                        GameVM.Trigger.Player:getPlayerAttr(
+                            targetUin,
+                            PLAYERATTR.CUR_HP
+                        ) or "N/A"
+                end)
+            end
+
+            sendYellow("Current HP: " .. tostring(currentHP))
+
+            threadpool:wait(1)
+
+            sendYellow("UIN: " .. tostring(targetUin))
+
+            threadpool:wait(1)
+
+            targetPlayer = getTargetPlayer(targetUin)
+
+            positionText = "N/A"
+
+            if targetPlayer then
+                local x, y, z = targetPlayer:getPosition(0, 0, 0)
+
+                positionText =
+                    tostring(x / 100) .. ", " ..
+                    tostring(y / 100) .. ", " ..
+                    tostring(z / 100)
+            end
+
+            sendYellow("Position: " .. positionText)
+
+            threadpool:wait(1)
+
+            sendYellow("Attack: N/A")
+
+        end)
+
+    end, "Select Player")
+
+end
+
+
 function jgwj()
     ShowPlayerList(function(uin)
         local tdata = {
@@ -4391,136 +4530,6 @@ function jgwj()
     end, "Cảnh cáo người chơi")
 end
 
-
-function ChatBanManager()
-
-    _G.chatMuteState = _G.chatMuteState or {}
-
-    if not ClientCurGame or not ClientCurGame:isInGame() then
-        ShowGameTipsWithoutFilter("#cFF0000Please enter a game room first")
-        return
-    end
-
-    LoadHomelandLuas()
-
-    local uin_list = GetPlayerUinList()
-
-    if #uin_list == 0 then
-        ShowGameTipsWithoutFilter("#cFF0000No players found")
-        return
-    end
-
-    local data = {
-        visit = {
-            history_num = "Select player",
-            today_num = "#cFF7aad" .. #uin_list
-        },
-        event_home = {{param1 = 0, event_id = 5, event_time = 0}},
-        event_visit = {}
-    }
-
-    for i = 1, #uin_list do
-        data.event_visit[i] = {
-            uin = uin_list[i],
-            event_id = 5,
-            event_time = 0
-        }
-    end
-
-    GetInst("UIManager"):Open("HomeEventRecord")
-    GetInst("UIManager"):GetCtrl("HomeEventRecord"):UpdateUI(data)
-
-    getglobal("HomeEventRecordTitleFrameName"):SetText(
-        "Chat Permission Manager"
-    )
-
-    getglobal("HomeEventRecordTodayVisterText"):SetText(
-        "#cFF7aadPlayer List"
-    )
-
-    getglobal("HomeEventRecordTotalVisterText"):SetText(
-        "#cFF7aadClick a player to toggle chat"
-    )
-
-    local ctrl = GetInst("UIManager"):GetCtrl("HomeEventRecord")
-    local originalFunc = ctrl.EnterFriendHomeBtn_OnClick
-
-    function ctrl:EnterFriendHomeBtn_OnClick()
-
-        GetInst("UIManager"):Close("HomeEventRecord")
-        ctrl.EnterFriendHomeBtn_OnClick = originalFunc
-
-        local targetUin = this:GetClientID()
-
-        if _G.chatMuteState[targetUin] == nil then
-            _G.chatMuteState[targetUin] = false
-        end
-
-        local enableChat = not _G.chatMuteState[targetUin]
-
-        if enableChat then
-
-            local permit = {
-                [1] = "player",
-                [2] = "setPlayerGamePermits",
-                [3] = {targetUin, 0, CS_PERMIT_MUTE, false}
-            }
-
-            local mute = {
-                [1] = "player",
-                [2] = "setPlayerMute",
-                [3] = {targetUin}
-            }
-
-            pcall(function()
-                ScriptSupportTask:reportTaskToHost(
-                    SSTASKID.HOST_BordCast, permit
-                )
-
-                ScriptSupportTask:reportTaskToHost(
-                    SSTASKID.HOST_BordCast, mute
-                )
-            end)
-
-            _G.chatMuteState[targetUin] = true
-
-            ShowGameTipsWithoutFilter(
-                "#c00FF00Chat enable request sent: " .. targetUin
-            )
-
-        else
-
-            local permit = {
-                [1] = "player",
-                [2] = "setPlayerGamePermits",
-                [3] = {targetUin, 0, CS_PERMIT_MUTE, true}
-            }
-
-            local mute = {
-                [1] = "player",
-                [2] = "setPlayerMute",
-                [3] = {targetUin}
-            }
-
-            pcall(function()
-                ScriptSupportTask:reportTaskToHost(
-                    SSTASKID.HOST_BordCast, permit
-                )
-
-                ScriptSupportTask:reportTaskToHost(
-                    SSTASKID.HOST_BordCast, mute
-                )
-            end)
-
-            _G.chatMuteState[targetUin] = false
-
-            ShowGameTipsWithoutFilter(
-                "#cFF0000Chat disable request sent: " .. targetUin
-            )
-
-        end
-    end
-end
 
 
 local is_qcwp2_active = false
@@ -9411,11 +9420,12 @@ function UI:Init()
             { name = "Chỉ định dịch chuyển lúc hoàng hôn", func = zdcsrl },
             { name = "无心之惩", func = dffz },
             { name = "頻繁使用那項冷酷無情的懲罰", func = wjgr },
+            { name = "InfoManager", func = SendSelectedPlayerInfo },
             { name = "Hút cả nhóm", func = qtxr },
             { name = "Đặt điểm", func = szfs },
             { name = "刷屏聊天", func = tdwg },
             { name = "Lặp xóa vật phẩm rơi", func = qcwp2 },
-            { name = "summon creature ???", func = czgw },
+            { name = "summon creature", func = czgw },
             { name = "Phá khối", func = phfk },
             { name = "Tăng tốc nhân vật", func = rwjs_speed },
         }
@@ -9529,7 +9539,6 @@ function UI:Init()
             { name = "終極,射擊,明星", func = ssmc1 },
             { name = "Tâm ngắm tạo dung nham", func = zxyj },
             { name = "關於海洋顏色變化的文本", func = pmwz },
-            { name = "ChatBanManager", func = ChatBanManager },
             { name = "Bật quyền", func = kqqx },
             { name = "Bỏ qua cấm chat", func = wsjy },
             { name = "“终极神灭之剑”——这柄源自神秘天界的至高神兵，拥有抹杀一切邪恶的力量。", func = wjzxms },
