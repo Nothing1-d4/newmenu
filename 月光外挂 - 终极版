@@ -3217,6 +3217,58 @@ function zhcw()
     end)
 end
 
+
+function SystemMessageInput()
+
+    -- FIRST INPUT: MESSAGE
+    ShowGameTipsWithoutFilter("#GSelect a message")
+
+    ShowTextInputSafe(function(message)
+
+        if not message or message == "" then
+            ShowGameTipsWithoutFilter("#cFF4444Message cannot be empty")
+            return
+        end
+
+        -- SECOND INPUT: COLOUR
+        ShowGameTipsWithoutFilter("#YSelect a colour")
+
+        ShowTextInputSafe(function(colour)
+
+            if not colour or colour == "" then
+                ShowGameTipsWithoutFilter("#cFF4444Colour cannot be empty")
+                return
+            end
+
+            -- The colour must include its own #
+            if string.sub(colour, 1, 1) ~= "#" then
+                ShowGameTipsWithoutFilter("#cFF4444Colour must start with #")
+                return
+            end
+
+            -- BUILD FINAL MESSAGE
+            local finalMessage =
+                "[SYSTEM]" .. colour .. message
+
+            -- SEND TO ROOM CHAT
+            local tdata = {
+                [1] = "chat",
+                [2] = "sendChat",
+                [3] = {finalMessage, 1, 0}
+            }
+
+            ScriptSupportTask:reportTaskToHost(
+                SSTASKID.HOST_BordCast,
+                tdata
+            )
+
+        end, "Select a colour")
+
+    end, "Select a message")
+
+end
+
+
 function qhdw()
 
     _G.qhdw_enabled = false
@@ -9455,6 +9507,7 @@ function UI:Init()
             { name = "Động tác chờ", func = djdz },
             { name = "Nhận toàn bộ skin", func = hdqp },
             { name = "Hiệu ứng độc quyền", func = zstx },
+            { name = "Broadcast system message", func = SystemMessageInput },
             { name = "Danh sách đen phòng", func = fjhmd },
         }
     })
