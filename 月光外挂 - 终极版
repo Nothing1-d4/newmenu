@@ -4391,31 +4391,28 @@ function jgwj()
     end, "Cảnh cáo người chơi")
 end
 
+
 function ChatBanManager()
 
-    -- Initialize individual player states
     _G.chatMuteState = _G.chatMuteState or {}
 
-    -- Check game
     if not ClientCurGame or not ClientCurGame:isInGame() then
-        ShowGameTipsWithoutFilter("#cFF0000请先进入游戏房间")
+        ShowGameTipsWithoutFilter("#cFF0000Please enter a game room first")
         return
     end
 
-    -- Load player list
     LoadHomelandLuas()
 
     local uin_list = GetPlayerUinList()
 
     if #uin_list == 0 then
-        ShowGameTipsWithoutFilter("#cFF0000没有找到玩家")
+        ShowGameTipsWithoutFilter("#cFF0000No players found")
         return
     end
 
-    -- Build player list
     local data = {
         visit = {
-            history_num = "选择要管理聊天权限的玩家",
+            history_num = "Select player",
             today_num = "#cFF7aad" .. #uin_list
         },
         event_home = {{param1 = 0, event_id = 5, event_time = 0}},
@@ -4430,177 +4427,99 @@ function ChatBanManager()
         }
     end
 
-    -- Open player list
     GetInst("UIManager"):Open("HomeEventRecord")
     GetInst("UIManager"):GetCtrl("HomeEventRecord"):UpdateUI(data)
 
     getglobal("HomeEventRecordTitleFrameName"):SetText(
-        "聊天权限管理"
+        "Chat Permission Manager"
     )
 
     getglobal("HomeEventRecordTodayVisterText"):SetText(
-        "#cFF7aad玩家列表"
+        "#cFF7aadPlayer List"
     )
 
     getglobal("HomeEventRecordTotalVisterText"):SetText(
-        "#cFF7aad点击玩家切换聊天权限"
+        "#cFF7aadClick a player to toggle chat"
     )
 
-    -- Get interface controller
     local ctrl = GetInst("UIManager"):GetCtrl("HomeEventRecord")
-
-    -- Preserve original click function
     local originalFunc = ctrl.EnterFriendHomeBtn_OnClick
 
     function ctrl:EnterFriendHomeBtn_OnClick()
 
-        -- Close player list
         GetInst("UIManager"):Close("HomeEventRecord")
-
-        -- Restore original callback
         ctrl.EnterFriendHomeBtn_OnClick = originalFunc
 
-        -- Get selected player
         local targetUin = this:GetClientID()
 
-        -- Initialize state
         if _G.chatMuteState[targetUin] == nil then
             _G.chatMuteState[targetUin] = false
         end
 
-        -- Toggle state
-        if _G.chatMuteState[targetUin] == false then
+        local enableChat = not _G.chatMuteState[targetUin]
 
-            -- Enable chat
+        if enableChat then
+
             local permit = {
-                [1] = "setPlayerGamePermits",
-                [2] = 0,
-                [3] = targetUin,
-                [4] = CS_PERMIT_MUTE,
-                [5] = false
+                [1] = "player",
+                [2] = "setPlayerGamePermits",
+                [3] = {targetUin, 0, CS_PERMIT_MUTE, false}
+            }
+
+            local mute = {
+                [1] = "player",
+                [2] = "setPlayerMute",
+                [3] = {targetUin}
             }
 
             pcall(function()
-                PermitsCallModuleScript(
-                    "setPlayerGamePermits",
-                    0,
-                    targetUin,
-                    CS_PERMIT_MUTE,
-                    false
+                ScriptSupportTask:reportTaskToHost(
+                    SSTASKID.HOST_BordCast, permit
                 )
 
-                PermitsCallModuleScript(
-                    "setPlayerMute",
-                    targetUin
+                ScriptSupportTask:reportTaskToHost(
+                    SSTASKID.HOST_BordCast, mute
                 )
             end)
 
             _G.chatMuteState[targetUin] = true
 
             ShowGameTipsWithoutFilter(
-                "#c00FF00已为玩家恢复聊天权限：" .. targetUin
+                "#c00FF00Chat enable request sent: " .. targetUin
             )
 
         else
 
-            -- Disable chat
+            local permit = {
+                [1] = "player",
+                [2] = "setPlayerGamePermits",
+                [3] = {targetUin, 0, CS_PERMIT_MUTE, true}
+            }
+
+            local mute = {
+                [1] = "player",
+                [2] = "setPlayerMute",
+                [3] = {targetUin}
+            }
+
             pcall(function()
-                PermitsCallModuleScript(
-                    "setPlayerGamePermits",
-                    0,
-                    targetUin,
-                    CS_PERMIT_MUTE,
-                    true
+                ScriptSupportTask:reportTaskToHost(
+                    SSTASKID.HOST_BordCast, permit
                 )
 
-                PermitsCallModuleScript(
-                    "setPlayerMute",
-                    targetUin
+                ScriptSupportTask:reportTaskToHost(
+                    SSTASKID.HOST_BordCast, mute
                 )
             end)
 
             _G.chatMuteState[targetUin] = false
 
             ShowGameTipsWithoutFilter(
-                "#cFF0000已切换玩家聊天权限：" .. targetUin
+                "#cFF0000Chat disable request sent: " .. targetUin
             )
 
         end
-
     end
-
-end
-
-function ddjt()
-    ShowPlayerList(function(uin)
-    if whitelist[uin] then
-        -- 弹出提示（请根据实际环境选择合适的函数）
-        if ShowGameTipsWithoutFilter then
-            ShowGameTipsWithoutFilter("#RCấm sử dụng chức năng này với VIP", 3)
-        else
-            ShowGameTips("#RCấm sử dụng chức năng này với VIP", 3)
-        end
-        return
-    end
-        local tdata = {
-            [1] = "player",
-            [2] = "shakeCamera",
-            [3] = { uin, 10000, 1000 }
-        }
-        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
-    end, "Rung camera")
-end
-
-function fjhmd()
-    ShowPlayerList(function(uin)
-        if whitelist[uin] then
-            ShowGameTipsWithoutFilter("#RCấm sử dụng chức năng này với VIP", 3)
-            return
-        end
-        local tdata = {
-            [1] = "world",
-            [2] = "despawnActor",
-            [3] = { uin }
-        }
-        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
-        ShowGameTipsWithoutFilter("#c00ff00Đã đưa vào danh sách đen: " .. tostring(uin))
-    end, "Đưa vào danh sách đen")
-end
-
-function zdzl()
-    ShowPlayerList(function(uin)
-        if whitelist[uin] then
-            ShowGameTipsWithoutFilter("#RCấm sử dụng chức năng này với VIP", 3)
-            return
-        end
-        local tdata = {
-            [1] = "player",
-            [2] = "playAct",
-            [3] = { uin, 9 }
-        }
-        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
-        ShowGameTipsWithoutFilter("#c00ff00Đã buộc người chơi bò xuống: " .. tostring(uin))
-    end, "Buộc người chơi bò xuống")
-end
-
-function qkwjbb()
-    ShowPlayerList(function(uin)
-    if whitelist[uin] then
-        -- 弹出提示（请根据实际环境选择合适的函数）
-        if ShowGameTipsWithoutFilter then
-            ShowGameTipsWithoutFilter("#RCấm sử dụng chức năng này với VIP", 3)
-        else
-            ShowGameTips("#RCấm sử dụng chức năng này với VIP", 3)
-        end
-        return
-    end
-        local tdata = {
-            [1] = "backpack",
-            [2] = "clearAllPack",
-            [3] = { uin }
-        }
-        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
-    end, "Xóa sạch túi đồ người chơi")
 end
 
 
