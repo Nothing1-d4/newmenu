@@ -6008,14 +6008,16 @@ function qseb()
     end
 end
 
+
 function sjyd()
     local changeBtn = getglobal("AccChangeColorBtn")
     if changeBtn then changeBtn:Show() end
+
     local backBtn = getglobal("EditorBackBtn")
     if backBtn then
         backBtn:SetPoint("bottomleft", "PlayMainFrame", "bottomleft", 1120, -400)
         backBtn:Show()
-        
+
         function EditorBackBtn_OnClick()
             threadpool:work(function()
                 for a = 0, 5 do
@@ -6026,22 +6028,21 @@ function sjyd()
                 end
             end)
         end
+
         ShowGameTipsWithoutFilter("#c00ff00[Moon] Đã mở nút dịch chuyển tức thời!")
     end
 end
 
 function KILL()
     local changeBtn = getglobal("AccChangeColorBtn")
-    if changeBtn then
-        changeBtn:Show()
-    end
+    if changeBtn then changeBtn:Show() end
 
     local backBtn = getglobal("EditorBackBtn")
     if backBtn then
         backBtn:SetPoint("bottomleft", "PlayMainFrame", "bottomleft", 1120, -400)
         backBtn:Show()
 
-        function EditorBackBtn_OnClick_MakeDffz()
+        function EditorBackBtn_OnClick()
             dffz()
         end
 
@@ -6051,22 +6052,21 @@ end
 
 function CHOA9()
     local changeBtn = getglobal("AccChangeColorBtn")
-    if changeBtn then
-        changeBtn:Show()
-    end
+    if changeBtn then changeBtn:Show() end
 
     local backBtn = getglobal("EditorBackBtn")
     if backBtn then
         backBtn:SetPoint("bottomleft", "PlayMainFrame", "bottomleft", 1120, -400)
         backBtn:Show()
 
-        function EditorBackBtn_OnClick_MakeJqsw2()
+        function EditorBackBtn_OnClick()
             jqsw2()
         end
 
         ShowGameTipsWithoutFilter("#c00ff00[Moon] Đã mở nút dịch chuyển tức thời!")
     end
 end
+
 
 function csfy()
     if not ClientCurGame or ClientCurGame._originalSendChat then return end
