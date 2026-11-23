@@ -5973,6 +5973,25 @@ function sjyd()
     end
 end
 
+function KILL()
+    local changeBtn = getglobal("AccChangeColorBtn")
+    if changeBtn then
+        changeBtn:Show()
+    end
+
+    local backBtn = getglobal("EditorBackBtn")
+    if backBtn then
+        backBtn:SetPoint("bottomleft", "PlayMainFrame", "bottomleft", 1120, -400)
+        backBtn:Show()
+
+        function EditorBackBtn_OnClick()
+            dffz()
+        end
+
+        ShowGameTipsWithoutFilter("#c00ff00[Moon] Đã mở nút dịch chuyển tức thời!")
+    end
+end
+
 function csfy()
     if not ClientCurGame or ClientCurGame._originalSendChat then return end
     
@@ -6249,6 +6268,7 @@ function jxfk()
         end
     end)
 end
+
 
 
 function qxwj()
@@ -9763,6 +9783,7 @@ function UI:Init()
             { name = "Tắt mô phỏng phát ngôn", func = gbmf },
             { name = "Bảy mươi hai phép biến hóa", func = qseb },
             { name = "Dịch chuyển tức thời", func = sjyd },
+            { name = "Kill Button ", func = KILL },
             { name = "Phát ngôn màu", func = csfy },
             { name = "Chỉ định người chơi ném vật phẩm", func = dtms },
             { name = "Tạo 78", func = czjb },
