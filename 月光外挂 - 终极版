@@ -2104,6 +2104,63 @@ GetInst("MessageBoxInterface"):dualBtnBox(
 )
 end
 
+function jqsw2()
+local pickedActor = CurMainPlayer:GetPickActor()
+local commonNameList = {
+    "ice_qicaihua_01", "bossblock_room","aotu_06_leishenzhichui","jiguang01"
+}
+
+if pickedActor then
+    local objid = pickedActor:getObjId()
+    local objType = pickedActor:getObjType()
+tdata = {}
+    tdata[1] = "mob";
+    tdata[2] = "setAtt";
+    tdata[3] = {objid,0,1}
+ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+tdata = {}
+    tdata[1] = "mob";
+    tdata[2] = "setAtt";
+    tdata[3] = {objid,0,2}
+ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+tdata = {}
+    tdata[1] = "mob";
+    tdata[2] = "setAtt";
+    tdata[3] = {objid,5,17}
+ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+tdata = {}
+    tdata[1] = "mob";
+    tdata[2] = "setAtt";
+    tdata[3] = {objid,5,18}
+ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+tdata = {}
+    tdata[1] = "mob";
+    tdata[2] = "setAtt";
+    tdata[3] = {objid,10,21}
+ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+    for i = 1, #commonNameList do
+    local tdata = {
+        [1] = "actor",
+        [2] = "playBodyEffectByFile",
+        [3] = {objid,commonNameList[i], true}
+    }
+    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+    tdata = {}
+    tdata[1] = "actor";
+    tdata[2] = "changeCustomModel";
+    tdata[3] = {objid,[=[skin_47]=]}
+ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+tdata = {}
+    tdata[1] = "actor";
+    tdata[2] = "setnickname";
+    tdata[3] = {objid,"#b#KNpcWithNoQuest"}
+ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+    
+    end
+    end
+    end
+    
+
 
 
 function zxph()
@@ -5984,8 +6041,27 @@ function KILL()
         backBtn:SetPoint("bottomleft", "PlayMainFrame", "bottomleft", 1120, -400)
         backBtn:Show()
 
-        function EditorBackBtn_OnClick()
+        function EditorBackBtn_OnClick_MakeDffz()
             dffz()
+        end
+
+        ShowGameTipsWithoutFilter("#c00ff00[Moon] Đã mở nút dịch chuyển tức thời!")
+    end
+end
+
+function CHOA9()
+    local changeBtn = getglobal("AccChangeColorBtn")
+    if changeBtn then
+        changeBtn:Show()
+    end
+
+    local backBtn = getglobal("EditorBackBtn")
+    if backBtn then
+        backBtn:SetPoint("bottomleft", "PlayMainFrame", "bottomleft", 1120, -400)
+        backBtn:Show()
+
+        function EditorBackBtn_OnClick_MakeJqsw2()
+            jqsw2()
         end
 
         ShowGameTipsWithoutFilter("#c00ff00[Moon] Đã mở nút dịch chuyển tức thời!")
@@ -9782,8 +9858,9 @@ function UI:Init()
             { name = "Lấy vật phẩm máy chủ đám mây", func = bbqw },
             { name = "Tắt mô phỏng phát ngôn", func = gbmf },
             { name = "Bảy mươi hai phép biến hóa", func = qseb },
-            { name = "Dịch chuyển tức thời", func = sjyd },
-            { name = "Kill Button ", func = KILL },
+            { name = "TP Button", func = sjyd },
+            { name = "KillAll Button", func = KILL },
+            { name = "Kill Button", func = CHOA9 },
             { name = "Phát ngôn màu", func = csfy },
             { name = "Chỉ định người chơi ném vật phẩm", func = dtms },
             { name = "Tạo 78", func = czjb },
