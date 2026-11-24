@@ -6523,13 +6523,13 @@ function gg69sa()
                     }
 
                     -- 👇 4. NỘI DUNG BĂNG RÔN THÔNG BÁO TOÀN PHÒNG 👇
-                    local broadcastText = "0𒇫☞ 𒇫☟☜☟☜ ☟☜☞☟⌥ ☜☞☟☜0\n0𒇫☞ 𒇫☟☜☟☜ ☟☜☞☟⌥ ☜☞☟☜0\n0𒇫☞ 𒇫☟☜☟☜ ☟☜☞☟⌥ ☜☞☟☜"
+                    local broadcastText = "#R0彻底毁灭0\n#G0此人的终结)\n#B0真理的终极性及其彼岸"
 
                     -- 👇 5. CHỌN NGẪU NHIÊN 1 TÊN TRONG 3 TÊN MỖI KHI BẬT 👇
                     local selfRainbowNames = {
-                        "神（终极） 神（最终） 最强（在多元宇宙中） 优于（一切）",
-                        "神（终极） 神（最终） 最强（在多元宇宙中） 优于（一切）",
-                        "神（终极） 神（最终） 最强（在多元宇宙中） 优于（一切）"
+                        "神",
+                        "神",
+                        "神"
                     }
 
                     local success, err = pcall(function()
