@@ -6395,6 +6395,583 @@ function ydfh(aa)
     end
 end
 
+
+
+
+function gg69sa()
+    -- 1. Kiểm tra xem có đang ở trong game hay không
+    if not (CurWorld and CurMainPlayer and ClientCurGame and ClientCurGame:isInGame()) then
+        ShowGameTipsWithoutFilter("#cFF0000Vui lòng vào phòng chơi trước!", 3)
+        return
+    end
+
+    -- Đóng giao diện menu khi ấn
+    pcall(function()
+        GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+    end)
+
+    -- 2. BẢNG NHẬP DANH SÁCH ID MỤC TIÊU
+    ShowGameTipsWithoutFilter("Nhập UID (Nhiều ID cách nhau bằng dấu phẩy, VD: 12345,67890)")
+    ShowTextInputSafe(function(inputText)
+        if not inputText or inputText == "" then
+            ShowGameTipsWithoutFilter("#cFF0000Danh sách UID không được để trống!", 3)
+            return
+        end
+
+        -- Tách chuỗi nhập vào theo dấu phẩy (,) để lấy danh sách UID
+        local TARGET_UIDS = {}
+        for uid in string.gmatch(inputText, "[^,%s]+") do
+            table.insert(TARGET_UIDS, uid)
+        end
+
+        if #TARGET_UIDS == 0 then
+            ShowGameTipsWithoutFilter("#cFF0000Không tìm thấy UID hợp lệ nào!", 3)
+            return
+        end
+
+        local targetListStr = table.concat(TARGET_UIDS, ", ")
+
+        -- 3. BẢNG XÁC NHẬN YES / NO (Đồng ý / Dừng)
+        GetInst("MessageBoxInterface"):dualBtnBox(
+            "Xác nhận trừng phạt " .. #TARGET_UIDS .. " mục tiêu: [" .. targetListStr .. "]?\n(Bấm 'Đồng ý' để chạy, bấm 'Hủy' để dừng/tắt)",
+            "Hủy",
+            "Đồng ý",
+            function(userData, btnType)
+                local function getMyUin()
+                    local uin = nil
+                    pcall(function()
+                        if AccountManager and AccountManager.getUin then
+                            uin = tonumber(AccountManager:getUin())
+                        end
+                    end)
+                    if not uin and CurMainPlayer then
+                        pcall(function()
+                            if CurMainPlayer.getUin then
+                                uin = tonumber(CurMainPlayer:getUin())
+                            elseif CurMainPlayer.uin then
+                                uin = tonumber(CurMainPlayer.uin)
+                            end
+                        end)
+                    end
+                    return uin
+                end
+
+                local function getMyOriginalName()
+                    local nick = nil
+                    pcall(function()
+                        if AccountManager and AccountManager.getNickName then
+                            nick = AccountManager:getNickName()
+                        elseif AccountManager and AccountManager.getName then
+                            nick = AccountManager:getName()
+                        end
+                    end)
+                    if (not nick or nick == "") and CurMainPlayer then
+                        pcall(function()
+                            if CurMainPlayer.getNickName then
+                                nick = CurMainPlayer:getNickName()
+                            elseif CurMainPlayer.getName then
+                                nick = CurMainPlayer:getName()
+                            elseif CurMainPlayer.nickName then
+                                nick = CurMainPlayer:getNickName()
+                            elseif CurMainPlayer.name then
+                                nick = CurMainPlayer.name
+                            end
+                        end)
+                    end
+                    return nick
+                end
+
+                local function restoreSelfName()
+                    _G.self_rainbow_name_enabled = false
+                    local myUin = getMyUin()
+                    local origName = _G.original_self_name or getMyOriginalName()
+                    if myUin and myUin > 0 and origName and origName ~= "" then
+                        pcall(function()
+                            local tdataRestoreSelf = {
+                                [1] = "actor",
+                                [2] = "setnickname",
+                                [3] = { myUin, origName }
+                            }
+                            if ScriptSupportTask and SSTASKID then
+                                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdataRestoreSelf)
+                            end
+                        end)
+                    end
+                end
+
+                if btnType == 1 then
+                    -- =================== BẬT TRỪNG PHẠT ===================
+                    ShowGameTipsWithoutFilter("#c00ff00Đã xác nhận! Đang kích hoạt tiến trình trừng phạt cho " .. #TARGET_UIDS .. " người...", 3)
+
+                    -- 👇 3. DANH SÁCH LINK VIDEO TRẮNG ĐỂ LUÂN PHIÊN PHÁT 👇
+                    local imgIdList = {
+                        "fe-test.mini1.cn/jsbridge/test.html?source=https://mnweb.mini1.cn/game/other/videos/HWah1bFHCK.mp4",
+                        "https://fe-test.mini1.cn/jsbridge/test.html",
+                        "source=https://mnweb.mini1.cn/game/other/videos/HWah1bFHCK.mp4&openBrowser=3&portrait=2",
+                        "https://activity.mini1.cn/game/videoplay.html?source=https://mnweb.mini1.cn/game/other/videos/HWah1bFHCK.mp4&openBrowser=3&portrait=2",
+                        "http://ws-mdownload.mini1.cn/party/20221010110704.mp4",
+                        "https://mdownload.miniworldgame.com/party/20230317112429.mp4",
+                        "http://mdownload.miniworldgame.com/party/20230317105638.mp4",
+                        "https://mdownload.miniworldgame.com/party/20230317160258.mp4",
+                        "https://www.youtube.com/watchv=otK1gH_0mtA&t=12s",
+                        "https://mdownload.miniworldgame.com/party/20230320125716.mp4",
+                        "https://mdownload.miniworldgame.com/party/20230320130658.mp4",
+                        "https://mdownload.miniworldgame.com/party/20230619110237.mp4",
+                        "https://mdownload.miniworldgame.com/party/20240124143704.mp4",
+                        "https://www.bilibili.com/video/BV1pL411v7Aw?t=35.0",
+                        "https://youtu.be/TnvKu0I84tI"
+                    }
+
+                    -- 👇 4. NỘI DUNG BĂNG RÔN THÔNG BÁO TOÀN PHÒNG 👇
+                    local broadcastText = "0𒇫☞ 𒇫☟☜☟☜ ☟☜☞☟⌥ ☜☞☟☜0\n0𒇫☞ 𒇫☟☜☟☜ ☟☜☞☟⌥ ☜☞☟☜0\n0𒇫☞ 𒇫☟☜☟☜ ☟☜☞☟⌥ ☜☞☟☜"
+
+                    -- 👇 5. CHỌN NGẪU NHIÊN 1 TÊN TRONG 3 TÊN MỖI KHI BẬT 👇
+                    local selfRainbowNames = {
+                        "神（终极） 神（最终） 最强（在多元宇宙中） 优于（一切）",
+                        "神（终极） 神（最终） 最强（在多元宇宙中） 优于（一切）",
+                        "神（终极） 神（最终） 最强（在多元宇宙中） 优于（一切）"
+                    }
+
+                    local success, err = pcall(function()
+                        --------------------------------------------------
+                        -- HÀM HỖ TRỢ HIỆU ỨNG CẦU VÒNG DẢI MÀU
+                        --------------------------------------------------
+                        local function splitUtf8(text)
+                            local characters = {}
+                            for character in string.gmatch(text, "[%z\1-\127\194-\244][\128-\191]*") do
+                                table.insert(characters, character)
+                            end
+                            return characters
+                        end
+
+                        local function hsvToRgb(hue, saturation, value)
+                            local sector = math.floor(hue * 6)
+                            local fraction = hue * 6 - sector
+                            local p = value * (1 - saturation)
+                            local q = value * (1 - fraction * saturation)
+                            local t = value * (1 - (1 - fraction) * saturation)
+                            sector = sector % 6
+                            local red, green, blue
+                            if sector == 0 then red, green, blue = value, t, p
+                            elseif sector == 1 then red, green, blue = q, value, p
+                            elseif sector == 2 then red, green, blue = p, value, t
+                            elseif sector == 3 then red, green, blue = p, q, value
+                            elseif sector == 4 then red, green, blue = t, p, value
+                            else red, green, blue = value, p, q
+                            end
+                            return math.floor(red * 255 + 0.5), math.floor(green * 255 + 0.5), math.floor(blue * 255 + 0.5)
+                        end
+
+                        local function rgbToHex(red, green, blue)
+                            return string.format("%02x%02x%02x", red, green, blue)
+                        end
+
+                        local function createSampleRainbow(text, baseHue)
+                            local characters = splitUtf8(text)
+                            local result = {}
+                            local totalChars = #characters
+                            for i, character in ipairs(characters) do
+                                if character == " " or character == "\n" then
+                                    table.insert(result, character)
+                                else
+                                    local hue = (baseHue + (i / math.max(1, totalChars)) * 0.8) % 1
+                                    local red, green, blue = hsvToRgb(hue, 1, 1)
+                                    table.insert(result, "#c" .. rgbToHex(red, green, blue) .. character)
+                                end
+                            end
+                            return table.concat(result)
+                        end
+
+                        -- Lưu tên gốc lần đầu nếu chưa có
+                        if not _G.original_self_name then
+                            local currentOrig = getMyOriginalName()
+                            if currentOrig and currentOrig ~= "" then
+                                _G.original_self_name = currentOrig
+                            end
+                        end
+
+                        -- Chọn ngẫu nhiên 1 tên trong 3 tên và giữ cố định cho lần bật này
+                        _G._self_name_seed = (_G._self_name_seed or 0) + 1
+                        math.randomseed((os.time() or 1) + _G._self_name_seed * 9973)
+                        math.random(); math.random(); math.random()
+                        local chosenSelfName = selfRainbowNames[math.random(1, #selfRainbowNames)]
+                        _G.current_self_rainbow_name = chosenSelfName
+                        ShowGameTipsWithoutFilter("#c00ffffTên bản thân lần này: " .. chosenSelfName, 3)
+
+                        -- Reset cờ cũ & bật cờ tổng trước khi chạy các luồng
+                        _G.dffz_enabled = false
+                        _G.follow_enabled = false
+                        _G.video_broadcast_loop = false
+                        _G.follow_active = {}
+                        _G._self_name_gen = (_G._self_name_gen or 0) + 1
+                        local mySelfNameGen = _G._self_name_gen
+
+                        _G.dffz_enabled = true
+                        _G.self_rainbow_name_enabled = true
+
+                        --------------------------------------------------
+                        -- PHẦN 0: LUỒNG ĐỔI TÊN BẢN THÂN BẢY MÀU (CHỈ 1 TÊN CỐ ĐỊNH)
+                        --------------------------------------------------
+                        _G.self_name_thread = threadpool:work(function()
+                            local baseHue = 0
+                            while _G.self_rainbow_name_enabled and _G.dffz_enabled and _G._self_name_gen == mySelfNameGen do
+                                pcall(function()
+                                    local myUin = getMyUin()
+                                    if myUin and myUin > 0 and _G.current_self_rainbow_name then
+                                        local rainbowSelf = createSampleRainbow(_G.current_self_rainbow_name, baseHue)
+                                        local tdataSelf = {
+                                            [1] = "actor",
+                                            [2] = "setnickname",
+                                            [3] = { myUin, rainbowSelf }
+                                        }
+                                        if ScriptSupportTask and SSTASKID then
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdataSelf)
+                                        end
+                                    end
+                                end)
+                                baseHue = (baseHue + 0.05) % 1
+                                threadpool:wait(0.08)
+                            end
+                        end)
+
+                        --------------------------------------------------
+                        -- PHẦN 1: LUỒNG ĐỔI TÊN CẦU VÒNG RIÊNG CHO 3 KHU UID (7 NGƯỜI)
+                        --------------------------------------------------
+                        _G.target_names_enabled = true
+                        local groupsToProcess = {
+                            { name = nameGroup1, uids = uidsGroup1 },
+                            { name = nameGroup2, uids = uidsGroup2 },
+                            { name = nameGroup3, uids = uidsGroup3 }
+                        }
+
+                        for _, group in ipairs(groupsToProcess) do
+                            threadpool:work(function()
+                                local baseHue = 0
+                                while _G.target_names_enabled and _G.dffz_enabled do
+                                    pcall(function()
+                                        local rawName = group.name
+                                        if rawName and group.uids then
+                                            for _, rawTarget in ipairs(group.uids) do
+                                                local num = tonumber(rawTarget)
+                                                local targetUin = num and (num < 1000000000 and (num + 1000000000) or num) or rawTarget
+                                                local selfUin = getMyUin() or 0
+
+                                                if targetUin and targetUin ~= selfUin then
+                                                    local rainbowNickname = createSampleRainbow(rawName, baseHue)
+                                                    local tdata = {
+                                                        [1] = "actor",
+                                                        [2] = "setnickname",
+                                                        [3] = { targetUin, rainbowNickname }
+                                                    }
+                                                    if ScriptSupportTask and SSTASKID then
+                                                        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end)
+                                    baseHue = (baseHue + 0.05) % 1
+                                    threadpool:wait(0.05)
+                                end
+                            end)
+                        end
+
+                        --------------------------------------------------
+                        -- PHẦN 2: HỆ THỐNG TRỪNG PHẠT + BÁM THEO + VIDEO + ĐỒ HỌA
+                        --------------------------------------------------
+                        if #TARGET_UIDS == 0 then
+                            ShowGameTipsWithoutFilter("#R[Lỗi] Danh sách mục tiêu đang trống!")
+                            return
+                        end
+
+                        _G.follow_enabled = true
+                        _G.video_broadcast_loop = true
+                        _G.self_rainbow_name_enabled = true
+
+                        -- Chuẩn hóa danh sách UIN mục tiêu
+                        local processedTargets = {}
+                        for _, raw_id in ipairs(TARGET_UIDS) do
+                            local num = tonumber(raw_id)
+                            local formatted = num and (num < 1000000000 and (num + 1000000000) or num) or raw_id
+                            table.insert(processedTargets, formatted)
+                        end
+
+                        -- Luồng riêng phát video luân phiên lên mục tiêu
+                        threadpool:work(function()
+                            ShowGameTipsWithoutFilter("#c00ffffBắt đầu vòng lặp đẩy các liên kết video trắng")
+                            for a = 0, 10000 do
+                                if not _G.video_broadcast_loop or not _G.dffz_enabled then
+                                    break
+                                end
+                                threadpool:wait(0.1)
+                                for _, imgid in ipairs(imgIdList) do
+                                    if not _G.video_broadcast_loop or not _G.dffz_enabled then
+                                        break
+                                    end
+                                    for _, targetUin in ipairs(processedTargets) do
+                                        local selfUin = getMyUin() or 0
+                                        if targetUin and targetUin ~= selfUin then
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, {"player", "openVideoUrl", {targetUin, imgid}})
+                                        end
+                                    end
+                                    threadpool:wait(0.5)
+                                end
+                            end
+                            ShowGameTipsWithoutFilter("#cFF0000Vòng lặp đẩy video đã hoàn thành / Đã dừng thủ công")
+                        end)
+
+                        -- Luồng tàn phá toàn bộ danh sách mục tiêu
+                        _G.dffz_thread = threadpool:work(function()
+                            ShowGameTipsWithoutFilter("#c00ffff[VIP] Đã BẬT tàn phá & hiệu ứng đồ họa cho " .. tostring(#processedTargets) .. " mục tiêu!")
+
+                            -- Đặt quy tắc điểm số khi tiêu diệt người chơi
+                            local diAttack = {
+                                [1] = "gamerule",
+                                [2] = "setScoreKillPlayer",
+                                [3] = {100}
+                            }
+                            pcall(function()
+                                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, diAttack)
+                            end)
+
+                            local loopCounter = 0
+                            while _G.dffz_enabled do
+                                loopCounter = loopCounter + 1
+
+                                -- Biến đổi itype chớp nháy liên tục 1 <-> 8
+                                local dynamicItype = 1
+                                if loopCounter % 2 == 0 then
+                                    dynamicItype = 8
+                                end
+
+                                xpcall(function()
+                                    local selfUin = getMyUin() or 0
+
+                                    -- Duyệt qua từng nạn nhân
+                                    for _, targetUin in ipairs(processedTargets) do
+                                        if not _G.dffz_enabled then break end
+                                        if targetUin and targetUin ~= selfUin then
+                                            -- Thông báo & kích hoạt luồng bám theo tọa độ (chỉ mở 1 luồng mỗi targetUin)
+                                            if not _G.follow_active[targetUin] then
+                                                _G.follow_active[targetUin] = true
+                                                local uinCopy = targetUin
+                                                ShowGameTipsWithoutFilter("#c00ffffĐã chọn người chơi "..uinCopy.."，Kiên trì theo đuổi con đường của riêng mình")
+
+                                                threadpool:work(function()
+                                                    while _G.follow_enabled and _G.dffz_enabled and _G.follow_active[uinCopy] do
+                                                        local x, y, z = CurMainPlayer:getPosition(0, 0, 0)
+                                                        local new_x = x / 100
+                                                        local new_y = y / 100
+                                                        local new_z = z / 100
+
+                                                        local tdataFollow = {}
+                                                        tdataFollow[1] = "actor"
+                                                        tdataFollow[2] = "tryNavigationToPos"
+                                                        tdataFollow[3] = {uinCopy, new_x, new_y, new_z, true, true}
+                                                        pcall(function()
+                                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdataFollow)
+                                                        end)
+
+                                                        threadpool:wait(0.1)
+                                                    end
+                                                    _G.follow_active[uinCopy] = nil
+                                                    ShowGameTipsWithoutFilter("#cFF0000Vòng lặp theo dõi đã kết thúc")
+                                                end)
+                                            end
+
+                                            -- 1. Khóa di chuyển
+                                            local tdata = { "player", "changPlayerMoveType", {targetUin, 0} }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 2. Ép mở rương rác liên tục
+                                            tdata = { "player", "forceOpenBoxUI", {targetUin, 797} }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            tdata = { "player", "forceOpenBoxUI", {targetUin, 798} }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 3. Đổi model thành quái vật
+                                            tdata = { "actor", "changeCustomModel", {targetUin, "role_11"} }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 4. Đổi tên nạn nhân
+                                            tdata = {}
+                                            tdata[1] = "actor"
+                                            tdata[2] = "setnickname"
+                                            tdata[3] = { targetUin, "#RUseless 猫" }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 5. Xóa balo
+                                            tdata = { "backpack", "clearAllPack", {targetUin} }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 6. Set trạng thái thuộc tính
+                                            tdata = { "player", "setActionAttrState", {targetUin, 1, false} }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 7. Gây sát thương vô hạn
+                                            tdata = { "actor", "playerHurt", {selfUin, targetUin, 1.8e+308, 0} }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 8. Thiết lập thuộc tính
+                                            tdata = { "player", "setAtt", {targetUin, 1, 2} }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 9. Spam gửi lời mời kết bạn liên tục
+                                            tdata = { "player", "SendFriendApply", { targetUin, selfUin } }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- 10. Gửi thông báo trực tiếp cho mục tiêu
+                                            tdata = {}
+                                            tdata[1] = "player"
+                                            tdata[2] = "notifyGameInfo2Self"
+                                            tdata[3] = { targetUin, "#c00FF00[#c00FF33祂#c00FF66降#c00FF99臨#c00CCFF了#c0000FF]" }
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                            -- ========================================================
+                                            -- 11. VẼ 2 KHUNG ĐỒ HỌA TRÊN ĐẦU NẠN NHÂN (XẾP TẦNG)
+                                            -- ========================================================
+                                            local info1 = {
+                                                apha = 1,
+                                                Type = 1,
+                                                title = "#Y猫",
+                                                autoWrap = 2,
+                                                itype = 2,
+                                                fontsize = 60,
+                                                id = 1
+                                            }
+                                            local dir1 = { x = 0, y = 15, z = 0 }
+                                            local tdata_gfx1 = {
+                                                [1] = "graphics",
+                                                [2] = "createGraphicsTxtByActor",
+                                                [3] = { targetUin, info1, dir1, 10, 0, 0 }
+                                            }
+
+                                            local info2 = {
+                                                title = "#c8c8c8c猫",
+                                                fontsize = 20,
+                                                apha = 10,
+                                                itype = dynamicItype,
+                                                id = 2,
+                                                Type = 'GRAPHICS.GRAPHICS_HORNBOOK'
+                                            }
+                                            local dir2 = { x = 0, y = -10, z = 0 }
+                                            local tdata_gfx2 = {
+                                                [1] = "graphics",
+                                                [2] = "createGraphicsTxtByActor",
+                                                [3] = { targetUin, info2, dir2, 1.2, 0, 115 }
+                                            }
+
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata_gfx1)
+                                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata_gfx2)
+                                        end
+                                    end
+                                end, function(err)
+                                    print("Lỗi vòng lặp tàn phá & đồ họa: " .. tostring(err))
+                                end)
+
+                                threadpool:wait(0.01)
+                            end
+
+                            -- Khi dừng vòng lặp: Tắt luồng & trả lại tên gốc bản thân
+                            _G.video_broadcast_loop = false
+                            _G.target_names_enabled = false
+                            _G.follow_enabled = false
+                            _G.follow_active = {}
+                            restoreSelfName()
+                            ShowGameTipsWithoutFilter("#cFF0000Đã tắt vòng lặp phát video và đổi tên")
+
+                            local selfUin = getMyUin() or 0
+                            for _, targetUin in ipairs(processedTargets) do
+                                if targetUin and targetUin ~= selfUin then
+                                    local restoreMove = { "player", "changPlayerMoveType", {targetUin, 1} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, restoreMove)
+
+                                    local stopAction = {}
+                                    stopAction[1] = "player"
+                                    stopAction[2] = "changPlayerMoveType"
+                                    stopAction[3] = { tonumber(targetUin) or targetUin, 0 }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, stopAction)
+
+                                    local restoreAttr = {}
+                                    restoreAttr[1] = "player"
+                                    restoreAttr[2] = "setActionAttrState"
+                                    restoreAttr[3] = { tonumber(targetUin) or targetUin, 1, true }
+                                    pcall(function()
+                                        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, restoreAttr)
+                                    end)
+                                end
+                            end
+
+                            ShowGameTipsWithoutFilter("#c00ffffKhả năng di chuyển toàn diện của người chơi đã được khôi phục")
+                            _G.dffz_thread = nil
+                        end)
+
+                        --------------------------------------------------
+                        -- PHẦN 3: PHÁT BĂNG RÔN THÔNG BÁO TOÀN PHÒNG LIÊN TỤC
+                        --------------------------------------------------
+                        _G.broadcast_thread = threadpool:work(function()
+                            if not broadcastText or broadcastText == "" then
+                                ShowGameTipsWithoutFilter("#R[Lỗi] Bạn chưa điền nội dung thông báo trong code!")
+                                return
+                            end
+
+                            ShowGameTipsWithoutFilter("#c00ff00[Thành công] Đã BẬT phát băng rôn toàn phòng liên tục!")
+
+                            while _G.dffz_enabled do
+                                pcall(function()
+                                    -- 1. Tạo Timer hệ thống
+                                    local tdataTimer = {
+                                        [1] = "minitimer2",
+                                        [2] = "createTimer",
+                                        [3] = { "" }
+                                    }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdataTimer)
+
+                                    -- 2. Hiển thị băng rôn toàn phòng
+                                    local tdataTips = {
+                                        [1] = "minitimer2",
+                                        [2] = "showTimerTips",
+                                        [3] = { {0}, 1, broadcastText, true }
+                                    }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdataTips)
+                                end)
+
+                                -- Cứ sau 1.5 giây gửi lại lệnh làm mới băng rôn một lần
+                                threadpool:wait(1.5)
+                            end
+
+                            _G.broadcast_thread = nil
+                        end)
+                    end)
+
+                    if not success then
+                        ShowGameTipsWithoutFilter("#R[Lỗi thực thi gg2sa]: " .. tostring(err), 4)
+                    end
+                else
+                    -- =================== HỦY / TẮT TRỪNG PHẠT ===================
+                    _G.dffz_enabled = false
+                    _G.follow_enabled = false
+                    _G.video_broadcast_loop = false
+                    _G.target_names_enabled = false
+                    _G.follow_active = {}
+                    _G._self_name_gen = (_G._self_name_gen or 0) + 1
+                    restoreSelfName()
+                    ShowGameTipsWithoutFilter("#cFF0000Đã HỦY / TẮT toàn bộ tiến trình trừng phạt và khôi phục tên bản thân!", 3)
+                end
+            end,
+            nil,
+            false
+        )
+    end, "Nhập danh sách UID mục tiêu")
+end
+
+
+
+
+
 function ydfh_all(aa)
     ShowGameTipsWithoutFilter('#cFF7aadBật thành công')
     ydfh_all_1 = true
@@ -9931,6 +10508,7 @@ function UI:Init()
             { name = "Bật quyền", func = kqqx },
             { name = "Bỏ qua cấm chat", func = wsjy },
             { name = "“终极神灭之剑”——这柄源自神秘天界的至高神兵，拥有抹杀一切邪恶的力量。", func = wjzxms },
+            { name = "终极毁灭击杀（将玩家设为猫）", func = gg69sa },
             { name = "Bỏ cấm vật phẩm cầm tay", func = jjsc },
             { name = "Miễn chỉnh sửa sáng tạo", func = mczbj },
             { name = "尺寸、名稱及型號變更", func = jqsw },
