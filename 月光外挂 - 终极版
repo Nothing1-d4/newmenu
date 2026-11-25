@@ -10792,28 +10792,26 @@ local QQMusicTriggerCtrl, QQMusicTriggerModel, QQMusicTriggerView = GetInst("Min
 function QQMusicTriggerCtrl:Start()
 
     ----------------------------------------------------------------
-    -- SECTION 1: REGISTER THE TWO MENU CATEGORIES
+    -- SECTION 1: REGISTER THE VISIBLE MENU CATEGORY
     --
-    -- Both categories are intentionally EMPTY when the menu opens.
-    -- Do not add song IDs or menu entries here unless you want them
-    -- to appear in the category.
+    -- Only RECOMMEND will be displayed.
+    -- NEAR remains a built-in list type but is not registered here.
     ----------------------------------------------------------------
 
-    -- Category 1: the original first category, renamed.
-    -- Its list type remains RECOMMEND.
-    --
-    -- Category 2: the original second category, renamed.
-    -- Its list type remains NEAR.
     self.define.leftInfos = {
         {
             title = "功能①终止功能",
             type = self.model.LISTTYPE.RECOMMEND
         },
-        {
-            title = "功能②特殊",
-            type = self.model.LISTTYPE.NEAR
-        },
     }
+
+    ----------------------------------------------------------------
+    -- SECTION 2: START THE RECOMMEND CATEGORY EMPTY
+    ----------------------------------------------------------------
+
+    self.model:SetMusicList(self.model.LISTTYPE.RECOMMEND, {})
+
+end
 
     ----------------------------------------------------------------
     -- SECTION 2: INITIALIZE THE MENU
@@ -10845,14 +10843,26 @@ end
 function QQMusicTriggerCtrl:RequestRecommendList()
     if GetInst("QQMusicPlayerManager") then
 
+        ----------------------------------------------------------------
+        -- SECTION 3: REGISTER THE SONG IDs
+        ----------------------------------------------------------------
+
         local recommendList = {
             {song_id = 10001},
-            {song_id = 10002}
+            {song_id = 10002},
+            {song_id = 19999},
+            {song_id = 20001},
+            {song_id = 20002},
+            {song_id = 20003},
+            {song_id = 20004}
         }
 
         self.model:SetMusicList(self.model.LISTTYPE.RECOMMEND, recommendList)
 
-        -- Existing function entry.
+        ----------------------------------------------------------------
+        -- SECTION 4: FIRST ORIGINAL FUNCTION
+        ----------------------------------------------------------------
+
         self.model:AddDetailMusic({
             song_id = 10001,
             song_name = "功能①——终极神诛——神级击杀",
@@ -10861,7 +10871,10 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
-        -- New function entry.
+        ----------------------------------------------------------------
+        -- SECTION 5: SECOND ORIGINAL FUNCTION
+        ----------------------------------------------------------------
+
         self.model:AddDetailMusic({
             song_id = 10002,
             song_name = "功能②-虚空终极击杀",
@@ -10870,31 +10883,26 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
-        self:RefreshMusicList(recommendList, self.model.LISTTYPE.RECOMMEND)
-    end
-end
+        ----------------------------------------------------------------
+        -- SECTION 6: INACTIVE SEPARATOR
+        ----------------------------------------------------------------
 
+        self.model:AddDetailMusic({
+            song_id = 19999,
+            song_name = "功能②特殊",
+            singer_name = "My Functions",
+            song_play_time = 0,
+            playable = 1
+        })
 
-
--- CATEGORY 2: LOAD SPECIAL FUNCTIONS
-
-
-function QQMusicTriggerCtrl:RequestNearList()
-    if GetInst("QQMusicPlayerManager") then
-
-        local nearList = {
-            {song_id = 20001},
-            {song_id = 20002},
-            {song_id = 20003},
-            {song_id = 20004}
-        }
-
-        self.model:SetMusicList(self.model.LISTTYPE.NEAR, nearList)
+        ----------------------------------------------------------------
+        -- SECTION 7: RWGX ENTRIES
+        ----------------------------------------------------------------
 
         self.model:AddDetailMusic({
             song_id = 20001,
             song_name = "设置自身生命值",
-            singer_name = "Special Functions",
+            singer_name = "My Functions",
             song_play_time = 0,
             playable = 1
         })
@@ -10902,7 +10910,7 @@ function QQMusicTriggerCtrl:RequestNearList()
         self.model:AddDetailMusic({
             song_id = 20002,
             song_name = "设置自定义功率值",
-            singer_name = "Special Functions",
+            singer_name = "My Functions",
             song_play_time = 0,
             playable = 1
         })
@@ -10910,7 +10918,7 @@ function QQMusicTriggerCtrl:RequestNearList()
         self.model:AddDetailMusic({
             song_id = 20003,
             song_name = "解锁帧",
-            singer_name = "Special Functions",
+            singer_name = "My Functions",
             song_play_time = 0,
             playable = 1
         })
@@ -10918,14 +10926,24 @@ function QQMusicTriggerCtrl:RequestNearList()
         self.model:AddDetailMusic({
             song_id = 20004,
             song_name = "通过 ID 选择帧",
-            singer_name = "Special Functions",
+            singer_name = "My Functions",
             song_play_time = 0,
             playable = 1
         })
 
-        self:RefreshMusicList(nearList, self.model.LISTTYPE.NEAR)
+        ----------------------------------------------------------------
+        -- SECTION 8: REFRESH THE CATEGORY
+        ----------------------------------------------------------------
+
+        self:RefreshMusicList(recommendList, self.model.LISTTYPE.RECOMMEND)
     end
 end
+
+
+-- CATEGORY 2: LOAD SPECIAL FUNCTIONS
+
+
+
 
 
 
@@ -11021,18 +11039,29 @@ end
 -- SECTION 8: HANDLE A MENU ENTRY CLICK (OnAddMusic)
 function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
 
+    -- Original functions
+
     if song_id == 10001 or song_id == "10001" then
         gg69sa()
         return
     end
 
-    -- Run Void Ultimate Kill.
     if song_id == 10002 or song_id == "10002" then
         nvpou5()
         return
     end
 
-    -- Category 2: Special functions.
+    ----------------------------------------------------------------
+    -- SECTION 9: SEPARATOR
+    ----------------------------------------------------------------
+
+    if song_id == 19999 or song_id == "19999" then
+        return
+    end
+
+    ----------------------------------------------------------------
+    -- SECTION 10: RWGX FUNCTIONS
+    ----------------------------------------------------------------
 
     if song_id == 20001 or song_id == "20001" then
         rwgx_pct1()
@@ -11053,6 +11082,10 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
         rwgx_pct4()
         return
     end
+
+    -- Preserve the remaining original code below.
+
+end
 
 	
 	
