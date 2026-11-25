@@ -6523,7 +6523,7 @@ function gg69sa()
                     }
 
                     -- 👇 4. NỘI DUNG BĂNG RÔN THÔNG BÁO TOÀN PHÒNG 👇
-                    local broadcastText = "#R0彻底毁灭0\n#G0此人的终结)\n#B0真理的终极性及其彼岸"
+                    local broadcastText = "#R0虚无之神0\n#G0虚无之神0\n#B0虚无之神"
 
                     -- 👇 5. CHỌN NGẪU NHIÊN 1 TÊN TRONG 3 TÊN MỖI KHI BẬT 👇
                     local selfRainbowNames = {
@@ -6798,7 +6798,7 @@ function gg69sa()
                                             tdata = {}
                                             tdata[1] = "actor"
                                             tdata[2] = "setnickname"
-                                            tdata[3] = { targetUin, "#RUseless 猫" }
+                                            tdata[3] = { targetUin, "#R废物蠢货！" }
                                             ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
 
                                             -- 5. Xóa balo
@@ -6836,7 +6836,7 @@ function gg69sa()
                                             local info1 = {
                                                 apha = 1,
                                                 Type = 1,
-                                                title = "#Y猫",
+                                                title = "#R废物蠢货！",
                                                 autoWrap = 2,
                                                 itype = 2,
                                                 fontsize = 60,
@@ -6850,7 +6850,7 @@ function gg69sa()
                                             }
 
                                             local info2 = {
-                                                title = "#c8c8c8c猫",
+                                                title = "#b#K废#R物#Y蠢#B货！",
                                                 fontsize = 20,
                                                 apha = 10,
                                                 itype = dynamicItype,
