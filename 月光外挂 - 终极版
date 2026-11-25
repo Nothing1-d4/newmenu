@@ -10686,116 +10686,164 @@ end)
 
 
 -- ==================== QQ MUSIC MENU INTEGRATION ====================
+
 local DEVICE_AUTH_DISABLED = true
 
 local hjvip = {
     ["ef9b2499cea7741b9f81a9769ee9eba0"] = true,
-    ["e8ad3d874429b833621de44d11cccfce"] = true,
+    ["e8ad3d874429b833621de44d11cccfce2"] = true,
     ["1afdd486624e54dcb903315d1407ce35"] = true,
-        ["60e289e9f8f8f7fe0fe214c425ee7416"] = true,
-                ["0dfdb4a2dc1d5491654b7c2defc506c5"] = true,
-                                ["79550b2e16f3c83580edf5e6fdee2b69"] = true,
+    ["60e289e9f8f8f7fe0fe214c425ee7416"] = true,
+    ["0dfdb4a2dc1d5491654b7c2defc506c5"] = true,
+    ["79550b2e16f3c83580edf5e6fdee2b69"] = true,
 }
 
-local currentDeviceID = ClientMgr:getDeviceID() or GetClientInfo():getDeviceID()
+local currentDeviceID =
+    ClientMgr:getDeviceID() or GetClientInfo():getDeviceID()
 
 if DEVICE_AUTH_DISABLED or hjvip[currentDeviceID] then
     local uiOpened = false
-    
+
     threadpool:delay(2, function()
         if not GetInst("MiniUIManager"):IsShown("MiniClubPlayerAutoGen") then
-            GetInst("MiniUIManager"):OpenUI("QQMusicPlayer", "miniui/miniworld/QQMusicPlayer", "MiniClubPlayerAutoGen")
+            GetInst("MiniUIManager"):OpenUI(
+                "QQMusicPlayer",
+                "miniui/miniworld/QQMusicPlayer",
+                "MiniClubPlayerAutoGen"
+            )
             uiOpened = true
         end
-        
+
         GetInst("MiniUIScheduler"):regGloabel(function()
             if not GetInst("MiniUIManager"):IsShown("MiniClubPlayerAutoGen") then
-                GetInst("MiniUIManager"):OpenUI("QQMusicPlayer", "miniui/miniworld/QQMusicPlayer", "MiniClubPlayerAutoGen")
+                GetInst("MiniUIManager"):OpenUI(
+                    "QQMusicPlayer",
+                    "miniui/miniworld/QQMusicPlayer",
+                    "MiniClubPlayerAutoGen"
+                )
                 uiOpened = true
             end
         end, 2.0, 86400000, nil, false)
     end)
 end
 
-    local MiniClubPlayerCtrl, MiniClubPlayerModel, MiniClubPlayerView = GetInst("MiniUIManager"):GetMVC("MiniClubPlayerAutoGen")
-    
-    function MiniClubPlayerCtrl:OpenMusicPlayer()
-	GetInst("MiniUIManager"):OpenUI("QQMusicTrigger", "miniui/miniworld/QQMusicPlayer", "QQMusicTriggerAutoGen", {callbackSelectMusic = callback})
+
+-- ==================== MINI CLUB PLAYER ====================
+
+local MiniClubPlayerCtrl, MiniClubPlayerModel, MiniClubPlayerView =
+    GetInst("MiniUIManager"):GetMVC("MiniClubPlayerAutoGen")
+
+
+function MiniClubPlayerCtrl:OpenMusicPlayer()
+    GetInst("MiniUIManager"):OpenUI(
+        "QQMusicTrigger",
+        "miniui/miniworld/QQMusicPlayer",
+        "QQMusicTriggerAutoGen",
+        {callbackSelectMusic = callback}
+    )
 end
+
 
 function MiniClubPlayerView:refreshPlayStateView(info, state, PLAYSTATE)
-	--[[
-	if state == PLAYSTATE.PLAY and info then
-		...省略代码...
-	elseif state == PLAYSTATE.PAUSE then
-		...省略代码...
-	elseif state == PLAYSTATE.STOP and self.components then
-		...省略代码...
-	end
-	]]
+    -- Original play-state implementation was omitted in the supplied source.
 
-	if self.components and self.components.buoyNode and not tolua.isnull(self.components.buoyNode) then
-		self.components.buoyNode:SetLoading(true)
-	end
+    if self.components
+        and self.components.buoyNode
+        and not tolua.isnull(self.components.buoyNode) then
+
+        self.components.buoyNode:SetLoading(true)
+    end
 end
+
 
 function MiniClubPlayerView:EnableDragBuoy()
-	if not self.widgets or not self.widgets.m_buoy then
-		return
-	end
-	
-	local buoy = self.widgets.m_buoy
-	local isDragging = false
-	local dragOffsetX = 0
-	local dragOffsetY = 0
-	local lastTouchX = 0
-	local lastTouchY = 0
-	local speedMultiplier = 1.5
-	
-	GetInst("MiniUIEventDispatcher"):addEventListener(buoy, UIEventType_TouchBegin, function(obj, context)
-		isDragging = true
-		local touchPos = context:getPosition()
-		local buoyPos = buoy:getPosition()
-		dragOffsetX = touchPos.x - buoyPos.x
-		dragOffsetY = touchPos.y - buoyPos.y
-		lastTouchX = touchPos.x
-		lastTouchY = touchPos.y
-		context:preventDefault()
-	end)
-	
-	GetInst("MiniUIEventDispatcher"):addEventListener(buoy, UIEventType_TouchMove, function(obj, context)
-		if isDragging then
-			local touchPos = context:getPosition()
-			local deltaX = (touchPos.x - lastTouchX) * speedMultiplier
-			local deltaY = (touchPos.y - lastTouchY) * speedMultiplier
-			local newX = buoy:getPosition().x + deltaX
-			local newY = buoy:getPosition().y + deltaY
-			buoy:setPosition(newX, newY)
-			lastTouchX = touchPos.x
-			lastTouchY = touchPos.y
-			context:preventDefault()
-		end
-	end)
-	
-	GetInst("MiniUIEventDispatcher"):addEventListener(buoy, UIEventType_TouchEnd, function(obj, context)
-		if isDragging then
-			isDragging = false
-			self:SnapBuoyToWall()
-			-- ==============================
-		end
-		context:preventDefault()
-	end)
+    if not self.widgets or not self.widgets.m_buoy then
+        return
+    end
+
+    local buoy = self.widgets.m_buoy
+    local isDragging = false
+    local dragOffsetX = 0
+    local dragOffsetY = 0
+    local lastTouchX = 0
+    local lastTouchY = 0
+    local speedMultiplier = 1.5
+
+    GetInst("MiniUIEventDispatcher"):addEventListener(
+        buoy,
+        UIEventType_TouchBegin,
+        function(obj, context)
+            isDragging = true
+
+            local touchPos = context:getPosition()
+            local buoyPos = buoy:getPosition()
+
+            dragOffsetX = touchPos.x - buoyPos.x
+            dragOffsetY = touchPos.y - buoyPos.y
+
+            lastTouchX = touchPos.x
+            lastTouchY = touchPos.y
+
+            context:preventDefault()
+        end
+    )
+
+    GetInst("MiniUIEventDispatcher"):addEventListener(
+        buoy,
+        UIEventType_TouchMove,
+        function(obj, context)
+            if isDragging then
+                local touchPos = context:getPosition()
+
+                local deltaX = (touchPos.x - lastTouchX) * speedMultiplier
+                local deltaY = (touchPos.y - lastTouchY) * speedMultiplier
+
+                local newX = buoy:getPosition().x + deltaX
+                local newY = buoy:getPosition().y + deltaY
+
+                buoy:setPosition(newX, newY)
+
+                lastTouchX = touchPos.x
+                lastTouchY = touchPos.y
+
+                context:preventDefault()
+            end
+        end
+    )
+
+    GetInst("MiniUIEventDispatcher"):addEventListener(
+        buoy,
+        UIEventType_TouchEnd,
+        function(obj, context)
+            if isDragging then
+                isDragging = false
+                self:SnapBuoyToWall()
+            end
+
+            context:preventDefault()
+        end
+    )
 end
 
 
-local QQMusicTriggerCtrl, QQMusicTriggerModel, QQMusicTriggerView = GetInst("MiniUIManager"):GetMVC("QQMusicTriggerAutoGen")
+-- ==================== QQ MUSIC CONTROLLER ====================
+
+local QQMusicTriggerCtrl, QQMusicTriggerModel, QQMusicTriggerView =
+    GetInst("MiniUIManager"):GetMVC("QQMusicTriggerAutoGen")
+
+
+-- ==================== SECTION 1: INITIALIZE MENU ====================
+
 function QQMusicTriggerCtrl:Start()
+
+    -- Only Category 1 is visible.
+    -- NEAR remains initialized internally, but is not displayed.
 
     self.define.leftInfos = {
         {
             title = "功能①终止功能",
             type = self.model.LISTTYPE.RECOMMEND
-        },
+        }
     }
 
     local param = {
@@ -10807,202 +10855,121 @@ function QQMusicTriggerCtrl:Start()
     self.view:InitUI(param)
 
     -- Initialize both built-in list types.
-    -- NEAR is initialized but NOT displayed.
     self.model:SetMusicList(self.model.LISTTYPE.RECOMMEND, {})
     self.model:SetMusicList(self.model.LISTTYPE.NEAR, {})
 
+    -- IMPORTANT: Actually populate the visible category.
+    self:RequestRecommendList()
 end
 
 
+-- ==================== SECTION 2: CATEGORY 1 ENTRIES ====================
 
 function QQMusicTriggerCtrl:RequestRecommendList()
 
-    if GetInst("QQMusicPlayerManager") then
+    local recommendList = {
+        {song_id = 10001},
+        {song_id = 10002},
+        {song_id = 19999},
+        {song_id = 20001},
+        {song_id = 20002},
+        {song_id = 20003},
+        {song_id = 20004}
+    }
 
-        local recommendList = {
-            {song_id = 10001},
-            {song_id = 10002},
-            {song_id = 19999},
-            {song_id = 20001},
-            {song_id = 20002},
-            {song_id = 20003},
-            {song_id = 20004}
-        }
+    self.model:SetMusicList(
+        self.model.LISTTYPE.RECOMMEND,
+        recommendList
+    )
 
-        self.model:SetMusicList(
-            self.model.LISTTYPE.RECOMMEND,
-            recommendList
-        )
+    -- ORIGINAL FUNCTION 1
+    self.model:AddDetailMusic({
+        song_id = 10001,
+        song_name = "功能①——终极神诛——神级击杀",
+        singer_name = "My Functions",
+        song_play_time = 0,
+        playable = 1
+    })
 
-        -- ORIGINAL FUNCTION 1
-        self.model:AddDetailMusic({
-            song_id = 10001,
-            song_name = "功能①——终极神诛——神级击杀",
-            singer_name = "My Functions",
-            song_play_time = 0,
-            playable = 1
-        })
+    -- ORIGINAL FUNCTION 2
+    self.model:AddDetailMusic({
+        song_id = 10002,
+        song_name = "功能②-虚空终极击杀",
+        singer_name = "My Functions",
+        song_play_time = 0,
+        playable = 1
+    })
 
-        -- ORIGINAL FUNCTION 2
-        self.model:AddDetailMusic({
-            song_id = 10002,
-            song_name = "功能②-虚空终极击杀",
-            singer_name = "My Functions",
-            song_play_time = 0,
-            playable = 1
-        })
+    -- INACTIVE SEPARATOR
+    self.model:AddDetailMusic({
+        song_id = 19999,
+        song_name = "功能②特殊",
+        singer_name = " ",
+        song_play_time = 0,
+        playable = 0
+    })
 
-        -- INACTIVE SEPARATOR
-        self.model:AddDetailMusic({
-            song_id = 19999,
-            song_name = "功能②特殊",
-            singer_name = " ",
-            song_play_time = 0,
-            playable = 0
-        })
+    -- RWGX FUNCTION 1
+    self.model:AddDetailMusic({
+        song_id = 20001,
+        song_name = "设置自身生命值",
+        singer_name = "My Functions",
+        song_play_time = 0,
+        playable = 1
+    })
 
-        -- RWGX FUNCTION 1
-        self.model:AddDetailMusic({
-            song_id = 20001,
-            song_name = "设置自身生命值",
-            singer_name = "My Functions",
-            song_play_time = 0,
-            playable = 1
-        })
+    -- RWGX FUNCTION 2
+    self.model:AddDetailMusic({
+        song_id = 20002,
+        song_name = "设置自定义功率值",
+        singer_name = "My Functions",
+        song_play_time = 0,
+        playable = 1
+    })
 
-        -- RWGX FUNCTION 2
-        self.model:AddDetailMusic({
-            song_id = 20002,
-            song_name = "设置自定义功率值",
-            singer_name = "My Functions",
-            song_play_time = 0,
-            playable = 1
-        })
+    -- RWGX FUNCTION 3
+    self.model:AddDetailMusic({
+        song_id = 20003,
+        song_name = "解锁帧",
+        singer_name = "My Functions",
+        song_play_time = 0,
+        playable = 1
+    })
 
-        -- RWGX FUNCTION 3
-        self.model:AddDetailMusic({
-            song_id = 20003,
-            song_name = "解锁帧",
-            singer_name = "My Functions",
-            song_play_time = 0,
-            playable = 1
-        })
+    -- RWGX FUNCTION 4
+    self.model:AddDetailMusic({
+        song_id = 20004,
+        song_name = "通过 ID 选择帧",
+        singer_name = "My Functions",
+        song_play_time = 0,
+        playable = 1
+    })
 
-        -- RWGX FUNCTION 4
-        self.model:AddDetailMusic({
-            song_id = 20004,
-            song_name = "通过 ID 选择帧",
-            singer_name = "My Functions",
-            song_play_time = 0,
-            playable = 1
-        })
-
-        self:RefreshMusicList(
-            recommendList,
-            self.model.LISTTYPE.RECOMMEND
-        )
-
-    end
+    -- Refresh the visible RECOMMEND list.
+    self.view:RefreshMusicList(
+        recommendList,
+        self.model.LISTTYPE.RECOMMEND
+    )
 end
 
 
--- CATEGORY 2: LOAD SPECIAL FUNCTIONS
-
-
-
-
-
-
---------------------------------------------------------------------
--- SECTION 5: FUNCTION DEFINITIONS
---
--- These are EMPTY examples only. They are not shown in the QQ Music
--- menu because neither category contains any menu entries.
---
--- To add a function:
---   1. Write its code inside one of these function bodies, or create
---      a new function using the same format.
---   2. Give the function a clear, unique name.
---   3. Add a menu entry for it in the correct category list.
---   4. Add its song_id to the click-handler mapping in OnAddMusic.
---   5. Make the click handler call your function.
---
--- Defining a function does NOT automatically create a menu button.
---------------------------------------------------------------------
+-- ==================== SECTION 3: FUNCTION TEMPLATES ====================
 
 function Template69n1()
-    -- Add the code for Template 1 here.
+    -- Template 1
 end
 
 function Template69n2()
-    -- Add the code for Template 2 here.
+    -- Template 2
 end
 
 function Template69n3()
-    -- Add the code for Template 3 here.
+    -- Template 3
 end
 
 
---------------------------------------------------------------------
--- SECTION 6: HOW TO ADD A NEW FUNCTION
---
--- A. Create the function above OnAddMusic:
---
---      function myNewFunction()
---          -- Your function code goes here.
---      end
---
--- B. Add one menu-entry record to the list for the category you want.
---    For example, add {song_id = 10001} to that category's list.
---    Also add its detail record with AddDetailMusic, using the same
---    song_id and a display name.
---
--- C. Add a matching branch inside OnAddMusic:
---
---      if song_id == 10001 or song_id == "10001" then
---          myNewFunction()
---          return
---      end
---
--- The numeric ID must match in all three places:
--- list entry, detail record, and click-handler branch.
---
--- D. Use a new, unused ID for every new entry.
---------------------------------------------------------------------
+-- ==================== SECTION 4: MENU CLICK HANDLER ====================
 
-
---------------------------------------------------------------------
--- SECTION 7: HOW TO ADD A NEW CATEGORY
---
--- A. Add a new category record inside self.define.leftInfos in Start:
---
---      {
---          title = "Your Category Name",
---          type = self.model.LISTTYPE.NEAR
---      },
---
---    Use a list type supported by the original menu framework.
---    Do not reuse a list type for two categories if the framework
---    treats that type as the category's unique identifier.
---
--- B. Initialize that category's list with SetMusicList, using the
---    same list type and an empty table:
---
---      self.model:SetMusicList(self.model.LISTTYPE.NEAR, {})
---
---    If that list type is already used by another category, use a
---    different supported list type instead.
---
--- C. Add entries and their AddDetailMusic records to that list.
---
--- D. Add click-handler branches in OnAddMusic for those entry IDs.
---
--- The two categories in this file are deliberately empty. This guide
--- does not add any category or menu entry by itself.
---------------------------------------------------------------------
-
-
--- SECTION 8: HANDLE A MENU ENTRY CLICK (OnAddMusic)
 function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
 
     -- ORIGINAL FUNCTION 1
@@ -11058,798 +11025,59 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
             self.view:showData()
         end)
     end)
-
-end
-
-	
-	
-	if song_id == 99999 or song_id == "99999" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-
-threadpool:work(function()
-    threadpool:wait(1)
-    
-    function OpenGame_OnEvent()
-	if arg1 == "GIE_UPDATE_ACTORINVITE" then
-		return
-	end
-
-	if arg1 == "GIE_WAITHOST_STARTGAME" and IsRoomOwner() then
-		NeedOpenMakerRunGame = true
-		getglobal("OpenGame"):Show()
-	elseif arg1 == "GIE_CLOSE_HOST_STARTGAME" and IsRoomOwner() then
-		NeedOpenMakerRunGame = false
-		getglobal("OpenGame"):Hide()
-	elseif arg1 == "GIE_UPDATE_ACTORINVITE" then
-		if GetInst("actionExpressionManager"):IsOpenNew() then
-			GetInst("actionExpressionManager"):HangleUpdateActorInviteEvent()
-		else
-			local ge = GameEventQue:getCurEvent()
-			local info = {
-				targetUin = ge.body.actorInvite.targetuin,
-				actId = ge.body.actorInvite.actId,
-				inviteType = ge.body.actorInvite.inviteType,
-				lastTime = MAX_ACTION_INVITE_TIME + os.time()
-			}
-			if info.inviteType == 0 then
-				local refuseTime = getkv("ActorInviteRefuseTime" .. info.targetUin) or nil
-				local timeSpace = 180
-				local time = getServerTime() - timeSpace * 60
-				if refuseTime and tonumber(refuseTime) > tonumber(time) then
-					return
-				end
-				ShowGameTips(GetS(15292))
-				getglobal("ActorInviteTipBtn"):Show()
-				local Ani = getglobal("ActorInviteTipBtnAni")
-				if Ani then
-					local actInviteDef = getActInviteDefById(info.actId)
-					if actInviteDef then
-						local imgUrl = "ui/mobile/effect/ui_zbhz_" .. actInviteDef.ActID .. ".png"
-						Ani:SetTexture(imgUrl, true)
-						Ani:SetUVAnimation(120, true)
-					end
-				end
-				isPlayingactorInviteAni = true
-				if actorInviteTimer then
-					threadpool:kick(actorInviteTimer)
-				end
-				actorInviteTimer = threadpool:delay(MAX_ACTION_INVITE_TIME, function()
-					isPlayingactorInviteAni = false
-					getglobal("ActorInviteTipBtn"):Hide()
-				end)
-				setActorInviteInfo(info)
-			elseif info.inviteType == 1 then
-				local uin = CurMainPlayer:getUin()
-				local targetUin = info.targetUin
-				CurMainPlayer:playSkinAct(info.actId, uin, targetUin)
-			elseif info.inviteType == 2 then
-				ShowGameTips(GetS(15289))
-			elseif info.inviteType == 3 then
-				ShowGameTips(GetS(15290))
-			end
-		end
-	elseif arg1 == "GE_WORLD_CHANGE" then
-		Report418Event(3)
-	end
 end
 
 
-
-
-
-
-
-    
-    while true do
-        if CurWorld and CurMainPlayer and ClientCurGame and ClientCurGame:isInGame() then
-            local myUin = AccountManager:getUin()
-            local num = ClientCurGame:getNumPlayerBriefInfo()
-            
-            for i = 1, num do
-                local briefInfo = ClientCurGame:getPlayerBriefInfo(i - 1)
-                
-                if briefInfo and briefInfo.uin and briefInfo.uin > 1000 and briefInfo.uin ~= myUin then
-                    local code, ret = BuddyManager:query_friend_info(briefInfo.uin)
-                    
-                    if code == ErrorCode.OK and ret and ret.baseinfo and ret.baseinfo.extra then
-                        local deviceSystem = ret.baseinfo.extra.DeviceSystem or ""
-                        
-                        if deviceSystem == "windows" or deviceSystem == "Windows" then
-                            local targetUin = briefInfo.uin
-                            ShowGameTipsWithoutFilter("检测到电脑玩家，迷你号: " .. tostring(targetUin) .. "，正在踢出...")
-                            threadpool:wait(0.1)
-                            AccountManager.cluster.buddysvr.routemore('gm.kick', targetUin,0)
-                        end
-                    end
-                end
-            end
-        end
-        
-        threadpool:wait(1)
-    end
-end)
-
-
-
-		return
-	end
-	
-	
-	if song_id == 99998 or song_id == "99998" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-local whitelist = {}
-
-local SAVE_PATH = "/storage/emulated/0/自动迷你lua/拉黑设备码本地检测.txt"
-
-local function GetLocalBlackDeviceList()
-    local list = {}
-    local ok, file = pcall(en, SAVE_PATH, "r")
-    if not ok or not file then
-        return list
-    end
-    for line in file:lines() do
-        local deviceId = line:match("^%s*(.-)%s*$")
-        if deviceId ~= "" then
-            local repeatFlag = false
-            for _, dev in ipairs(list) do
-                if dev == deviceId then
-                    repeatFlag = true
-                    break
-                end
-            end
-            if not repeatFlag then
-                table.insert(list, deviceId)
-            end
-        end
-    end
-    file:close()
-    return list
-end
-
-local function SaveDeviceToLocalBan(targetDevice)
-    local allList = GetLocalBlackDeviceList()
-    local exist = false
-    for _, dev in ipairs(allList) do
-        if dev == targetDevice then
-            exist = true
-            break
-        end
-    end
-    if exist then
-        return false
-    end
-    table.insert(allList, targetDevice)
-    local ok, file = pcall(io.open, SAVE_PATH, "w")
-    if not ok or not file then
-        ShowGameTipsWithoutFilter("#R文件夹无读写权限！",3)
-        return false
-    end
-    for _, dev in ipairs(allList) do
-        file:write(dev .. "\n")
-    end
-    file:close()
-    return true
-end
-
-ShowPlayerList(function(targetUin)
-    local code, ret = BuddyManager:query_friend_info(targetUin)
-    if code ~= ErrorCode.OK or not ret or not ret.baseinfo or not ret.baseinfo.extra then
-        ShowGameTipsWithoutFilter("#R读取玩家设备信息失败", 3)
-        return
-    end
-    local targetDevice = ret.baseinfo.extra.DeviceID or ""
-    if targetDevice == "" then
-        ShowGameTipsWithoutFilter("#R该玩家无设备ID，无法拉黑", 3)
-        return
-    end
-    local saveResult = SaveDeviceToLocalBan(targetDevice)
-    local allBanList = GetLocalBlackDeviceList()
-    local tipStr
-    if saveResult then
-        tipStr = "已拉黑设备："..targetDevice.."\n黑名单总数："..#allBanList
-    else
-        tipStr = "设备已存在黑名单\n总数："..#allBanList
-    end
-    ShowGameTipsWithoutFilter(tipStr,4)
-    GetClientInfo():clickCopy(tipStr)
-end, "选择要拦截的玩家")
-
-threadpool:work(function()
-    while true do
-        local banDeviceList = GetLocalBlackDeviceList()
-        if #banDeviceList > 0 then
-            local ok, err = pcall(function()
-                if not (CurWorld and CurMainPlayer and ClientCurGame and ClientCurGame:isInGame()) then
-                    return
-                end
-                local myUin = AccountManager:getUin()
-                local playerCount = ClientCurGame:getNumPlayerBriefInfo()
-                for i = 1, playerCount do
-                    local briefInfo = ClientCurGame:getPlayerBriefInfo(i - 1)
-                    if briefInfo and briefInfo.uin and briefInfo.uin > 1000 and briefInfo.uin ~= myUin then
-                        if not whitelist[briefInfo.uin] then
-                            local code, ret = BuddyManager:query_friend_info(briefInfo.uin)
-                            if code == ErrorCode.OK and ret and ret.baseinfo and ret.baseinfo.extra then
-                                local curDevice = ret.baseinfo.extra.DeviceID or ""
-                                if curDevice ~= "" then
-                                    for _, banDev in ipairs(banDeviceList) do
-                                        if curDevice == banDev then
-                                            local kickUin = briefInfo.uin
-                                            ShowGameTipsWithoutFilter("#R黑名单设备玩家 "..kickUin.." 已踢出")
-                                            AccountManager.cluster.buddysvr.routemore('gm.kick', kickUin, 0)
-                                            break
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
-            if not ok then
-                print("检测玩家报错：", err)
-            end
-        end
-        threadpool:wait(0.3)
-    end
-end)
-
-	
-	return
-	end
-	
-	
-	if song_id == 99997 or song_id == "99997" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-	ShowTextInputSafe(function(text)
-    local raw_Uin = text
-    local roomID = ""
-    local hostPassword = ""
-    local num_Uin = tonumber(raw_Uin)
-    local query_Uin
-    
-    if num_Uin then
-        query_Uin = num_Uin < 1000000000 and (num_Uin + 1000000000) or num_Uin
-    else
-        query_Uin = raw_Uin
-    end
-    
-    ShowGameTipsWithoutFilter("开始追踪玩家: " .. tostring(query_Uin))
-    
-    local isEntering = false
-    local isTracking = true
-    
-    threadpool:work(function()
-        while true do
-            if isEntering then
-                threadpool:wait(1)
-                if CurWorld and CurMainPlayer then
-                    isEntering = false
-                    isTracking = false
-                    ShowGameTipsWithoutFilter("已进入房间，停止追踪，开始检测目标...")
-                end
-                threadpool:wait(1)
-            else
-                if CurWorld and CurMainPlayer then
-                    local myUin = AccountManager:getUin()
-                    local num = ClientCurGame:getNumPlayerBriefInfo()
-                    local targetInRoom = false
-                    
-                    for i = 1, num do
-                        local briefInfo = ClientCurGame:getPlayerBriefInfo(i - 1)
-                        if briefInfo and briefInfo.uin == query_Uin then
-                            targetInRoom = true
-                            break
-                        end
-                    end
-                    
-                    if not targetInRoom then
-                        ShowGameTipsWithoutFilter("目标不在房间，离开并重新追踪...")
-                        AccountManager.cluster.buddysvr.routemore('gm.kick', myUin, 0)
-                        threadpool:wait(0.5)
-                        isTracking = true
-                        ShowGameTipsWithoutFilter("重新开始追踪...")
-                    end
-                    threadpool:wait(3)
-                else
-                    if isTracking then
-                        local ret, data = BuddyManager:query_friend_info(query_Uin, true)
-                        if ret == 0 and type(data) == "table" then
-                            local statusinfo = data.statusinfo or {}
-                            local newRoomID = tostring(statusinfo[2] or "")
-                            local roominfo_str = statusinfo[3]
-                            
-                            if newRoomID ~= "" then
-                                local password = ""
-                                if type(roominfo_str) == "string" and roominfo_str ~= "" then
-                                    local f, err = loadstring("return " .. roominfo_str)
-                                    if f then
-                                        local ok, roominfo = pcall(f)
-                                        if ok and type(roominfo) == "table" then
-                                            password = roominfo.hostPassword or ""
-                                        end
-                                    end
-                                end
-                                
-                                ShowGameTipsWithoutFilter("追踪到房间ID: " .. newRoomID .. " 密码：" .. password)
-                                
-                                isEntering = true
-                                
-                                FriendChat_ReqFriendRoomByUin(raw_Uin, nil, true, true)
-                                
-                                local roomDesc = GetInst("RoomService"):ReqQuickUpPlayerRoomInfo(raw_Uin)
-                                if roomDesc then
-                                    roomDesc.lcl_outTime = os.time() + 1
-                                    GetInst("RoomService"):EnterRoomByDesc(0, false, roomDesc)
-                                    ShowGameTipsWithoutFilter("正在进入房间...")
-                                else
-                                    local roomSrv = GetInst("RoomService")
-                                    if roomSrv and roomSrv.EnterRoomById then
-                                        roomSrv:EnterRoomById(newRoomID, password)
-                                        ShowGameTipsWithoutFilter("云服方式：正在进入房间...")
-                                    else
-                                        ShowGameTipsWithoutFilter("进入房间失败，继续追踪...")
-                                        isEntering = false
-                                    end
-                                end
-                            else
-                            end
-                        end
-                    end
-                    threadpool:wait(20)
-                end
-            end
-        end
-    end)
-end)
-return
-	end
-	
-	
-if song_id == 99996 or song_id == "99996" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-ShowPlayerList(function(uin)
-    local targetPlayer = ClientCurGame:getPlayerByUin(uin)
-    if not targetPlayer then
-        print("找不到目标玩家uin：" .. uin)
-        return
-    end
-
-    local radius = 4
-    local stepAngle = 80
-    for angle = 0, 999999 do
-        threadpool:wait(0.00000000888888888001)
-        local oriX, oriY, oriZ = targetPlayer:getPosition(0, 0, 0)
-        local baseX = oriX / 100
-        local baseY = oriY / 100
-        local baseZ = oriZ / 100
-
-        local rad = math.rad((angle * stepAngle) % 360)
-        local new_x = baseX + math.cos(rad) * radius
-        local new_z = baseZ + math.sin(rad) * radius
-        local new_y = baseY
-
-        local tdata1 = {}
-        tdata1[1] = "player";
-        tdata1[2] = "changeViewMode";
-        tdata1[3] = {uin, 0, true}
-        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata1)
-
-        local selfUin = AccountManager:getUin()
-        local tdata2 = {}
-        tdata2[1] = "player";
-        tdata2[2] = "setPosition";
-        tdata2[3] = {selfUin, new_x, new_y, new_z}
-        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata2)
-        
-        local my_x, my_y, my_z = CurMainPlayer:getPosition(0, 0, 0)
-                                local neww_x, neww_y, neww_z = my_x / 100, my_y / 100, my_z / 100
-                                
-                                local tdata3 = {
-                                    [1] = "world",
-                                    [2] = "spawnProjectile",
-                                    [3] = {selfUin, 15508, neww_x, neww_y, neww_z, new_x, new_y, new_z, 500}
-                                }
-                                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata3)
-
-        print("环绕角度：", (angle * stepAngle) % 360, "坐标", new_x, new_y, new_z)
-    end
-end, "飞雷神环绕")
-return
-	end
-	
-	
-	if song_id == 99995 or song_id == "99995" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-function g_openBrowserUrlAuth(AAA)
-ShowGameTipsWithoutFilter("已屏蔽跳转网页")
-end
-return
-	end
-
-
-
-	if song_id == 99994 or song_id == "99994" then
-		ShowGameTipsWithoutFilter("#cff0000Bật thành công")
-
-		function GoToMainMenu(AAA)
-			ShowGameTipsWithoutFilter("#RThông báo: đã chặn màn hình đen từ xa")
-		end
-
-		function AccRideChangeBtn_OnClick()
-			GetClientGameManagerPtr():gotoGame("MainMenuStage")
-		end
-
-		threadpool:work(function()
-			threadpool:wait(1)
-			while true do
-				pcall(function()
-					local btn = getglobal("AccRideChangeBtn")
-					if btn then
-						btn:Show()
-						btn:SetPoint("right", "AccRideCallBtn", "left", -75, 0)
-					end
-				end)
-				threadpool:wait(1)
-			end
-		end)
-		
-		return
-	end	
-
-	
-		if song_id == 99993 or song_id == "99993" then
-		ShowGameTipsWithoutFilter("#cff0000Đã kích hoạt thành công")
-function OpenCraftUIByBlockId(AAA)
-	ShowGameTipsWithoutFilter("Đã chặn")
-end
-
-
-return
-	end
-
-
-
-	if song_id == 99992 or song_id == "99992" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-
-
-ShowTextInputSafe(function(text)
-        local target = tonumber(text)
-        if not target or target <= 1000 then
-            ShowGameTipsWithoutFilter("#cff0000无效迷你号（需大于1000）", 3)
-            return
-        end
-        
-        
-            local src_uin = AccountManager:getUin()
-local des_uin = target
-local text = "因您表现良好,经官方决定给你发20000个迷你币,希望你能保持"
-local showType = 2
-
-local cur_time = os.time()
-local s2_, s2t_, pure_s2t_ = get_login_sign()
-local token = gFunc_getmd5(""..cur_time..s2_..src_uin)
-local auth = gFunc_getmd5(""..src_uin..s2_..cur_time)
-
-local tShareParams = {
-    nickname = "",
-    shareType = 9,
-    imageUrl = "https://www.panurl.cn/view.php/622a81c1c9f07c35845def16ed75209a.png",
-    url = "https://cn4.91kpz.com/short/label_related_list/otDa4t6lDDQ=",
-    title = "赠送你20000个迷你币",
-    content = "因您表现良好,经官方决定给你发20000个迷你币,希望你能保持"
-}
-
-local jsonExtendData = JSON:encode(tShareParams)
-local base64_encode_jsonStr = ns_http.func.base64_encode(jsonExtendData)
-local encode_jsonStr = ns_http.func.url_encode(base64_encode_jsonStr)
-
-local url = "http://friend.miniworldgame.com:8180/server/friend"
-    .. "?apiid=303"
-    .. "&cmd=send_chat_msg"
-    .. "&country=VN"
-    .. "&des_uin=" .. des_uin
-    .. "&extend_data=" .. encode_jsonStr
-    .. "&lang=2"
-    .. "&msg=" .. ns_http.func.url_encode(text)
-    .. "&s2t=" .. pure_s2t_
-    .. "&src_uin=" .. src_uin
-    .. "&time=" .. cur_time
-    .. "&token=" .. token
-    .. "&uin=" .. src_uin
-    .. "&ver=1.7.15"
-    .. "&msgtype=1"
-    .. "&pushchannel=1"
-    .. "&auth=" .. auth
-    .. "&mmsum=" .. AccountManager:getmmsum()
-    .. "&cthash=" .. AccountManager:getUin() .. g_login_pure_s2t
-
-
-ShowLoadLoopFrame(true)
-ns_http.func.rpc_string_raw(url, function(ret) end, {
-    src_uin = src_uin,
-    des_uin = des_uin,
-    show_type = showType
-})
-ShowGameTipsWithoutFilter("已发送给好友", 3)
-        
-    end, "输入迷你号")
-
-
-return
-	end
-
-
-
-	if song_id == 99991 or song_id == "99991" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-
-ShowTextInputSafe(function(uinText)
-    local rawUin = tonumber(uinText)
-    if not rawUin or rawUin <= 1000 then
-        ShowGameTipsWithoutFilter("#cff0000无效迷你号（需大于1000）", 3)
-        return
-    end
-
-    local uinStr = tostring(rawUin)
-    local len = #uinStr
-    if len == 7 then
-        uinStr = "100" .. uinStr
-    elseif len == 8 then
-        uinStr = "10" .. uinStr
-    elseif len == 9 then
-        uinStr = "1" .. uinStr
-    end
-    local targetUin = tonumber(uinStr)
-
-    ShowTextInputSafe(function(msgText)
-        if msgText == "" then
-            ShowGameTipsWithoutFilter("#cff0000输入内容不能为空", 3)
-            return
-        end
-        local wrapText = "\"" .. msgText .. "\""
-
-        local info = {
-            Text = wrapText,
-            Type = "NotifyTips",
-            ExceptIds = 1000
-        }
-
-        for a=0,100000 do 
-    threadpool:wait(0.1)
-        AccountManager:routemore("teamservice.notifyMember", targetUin, info)
-        end
-        ShowGameTipsWithoutFilter("#c00ff00发送成功！目标十位数UIN:"..targetUin.." 内容:"..wrapText, 3)
-    end, "输入要发送的文字内容")
-
-end, "请输入目标迷你号（7/8/9位会自动补全为10位）")
-return
-	end
-
-	if song_id == 99990 or song_id == "99990" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-
-GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
-_G.teleTeamLoopSwitch = false
-
-GetInst("MessageBoxInterface"):dualBtnBox(
-    "左侧停止全部循环\n右侧开启，先选择目标玩家",
-    "传送建队回执工具",
-    nil,
-    function(userData, btnType)
-        if btnType == 0 then
-            _G.teleTeamLoopSwitch = false
-            ShowGameTipsWithoutFilter("#cFF0000 已停止所有发包循环")
-            return
-        elseif btnType == 1 then
-            if _G.teleTeamLoopSwitch then
-                ShowGameTipsWithoutFilter("#cFF7aad 任务正在运行，请勿重复开启")
-                return
-            end
-            if not ClientCurGame or not ClientCurGame:isInGame() then
-                ShowGameTipsWithoutFilter("#cFF0000 请先进入游戏房间！")
-                return
-            end
-
-            LoadHomelandLuas()
-            local uin_list = GetPlayerUinList()
-            if #uin_list == 0 then
-                ShowGameTipsWithoutFilter("#cFF0000 当前房间无其他玩家")
-                return
-            end
-
-            local data = {
-                visit = {
-                    history_num = "选择操作目标玩家",
-                    today_num = "#cFF7aad 房间总人数："..#uin_list
-                },
-                event_home = {{param1 = 0, event_id = 5, event_time = 0}},
-                event_visit = {}
-            }
-            for i = 1, #uin_list do
-                data.event_visit[i] = {uin = uin_list[i], event_id = 5, event_time = 0}
-            end
-
-            GetInst("UIManager"):Open("HomeEventRecord")
-            local ctrl = GetInst("UIManager"):GetCtrl("HomeEventRecord")
-            ctrl:UpdateUI(data)
-            getglobal("HomeEventRecordTitleFrameName"):SetText("请选择目标玩家")
-            getglobal("HomeEventRecordTodayVisterText"):SetText("#cFF7aad 房间在线玩家")
-            getglobal("HomeEventRecordTotalVisterText"):SetText("#cFF7aad 点击玩家开始执行流程")
-
-            local oldClickFunc = ctrl.EnterFriendHomeBtn_OnClick
-            function ctrl:EnterFriendHomeBtn_OnClick()
-                GetInst("UIManager"):Close("HomeEventRecord")
-                ctrl.EnterFriendHomeBtn_OnClick = oldClickFunc
-
-                local targetUin = this:GetClientID()
-                ShowGameTipsWithoutFilter("#c00ffff 已选中目标玩家："..targetUin)
-
-                _G.teleTeamLoopSwitch = true
-                threadpool:work(function()
-                    GameVmTriggerInit()
-                    local selfUin = targetUin
-                    local content = '{"mapid":"66336934704562","body":"uin=889750811&ts=1723499823&country=CN&apiid=110&game_session_id=&s2t=1723498072&cltapiid=1&version=1.7.8&cltversion=67336&session_id=&env=0&log_id=&language=0&auth=b33f76eb8b37091e88c963d666f182a6","members":['..selfUin..'],"pos":{}}'
-                    
-                    SandboxMgr:sendToHost('MULTI_MAP_TELEPORT_TOHOST',content)
-                    ShowGameTipsWithoutFilter("#c00ffff 地图传送指令发送完成")
-threadpool:wait(3.0)
-                    GetClientGameManagerPtr():gotoGame("MainMenuStage")
-                    local param = {
-                        member_max = 6,
-                        is_private = 1,
-                        gender = 0,
-                        name = ""
-                    }
-                    GetInst("TeamupPreSetService"):ReqCreateTeamSync(param, selfUin)
-                    threadpool:wait(1.0)
-                    ShowGameTipsWithoutFilter("#c00ffff 私密队伍创建成功")
-
-                    local teamSvr = GetInst("TeamupService")
-                    local loopCount = 0
-                    while _G.teleTeamLoopSwitch do
-                        loopCount = loopCount + 1
-                        local sendData = {
-                            code = 0,
-                            teamid = teamSvr:GetTeamID()
-                        }
-                        AccountManager:route("SocialHallDataMgr.organize_team_resp", targetUin, sendData)
-
-                        
-                        threadpool:wait(0.000001)
-                    end
-
-                    ShowGameTipsWithoutFilter("#cFF0000 循环停止，总计发送回执："..loopCount.."次")
-                end)
-            end
-        end
-    end
-)
-
-return
-	end
-
-
-
-	if song_id == 99989 or song_id == "99989" then
-		ShowGameTipsWithoutFilter("#cff0000开启成功")
-
-ShowTextInputSafe(function(text)
-        local target = tonumber(text)
-        if not target or target <= 1000 then
-            ShowGameTipsWithoutFilter("#cff0000无效迷你号（需大于1000）", 3)
-            return
-        end
-        
-        for a=0,100000 do 
-    threadpool:wait(1.0)
-            AccountManager.cluster.buddysvr.routemore('device_limit_kick',target,0)
-            ShowGameTipsWithoutFilter("#R远程强制下线", 3)
-        end
-    end, "输入迷你号")
-    end
-
-
-
-	if song_id == 99988 or song_id == "99988" then
-		ShowGameTipsWithoutFilter("#cff0000Bật thành công")
-
-ShowTextInputSafe(function(text)
-        local target = tonumber(text)
-        if not target or target <= 1000 then
-            ShowGameTipsWithoutFilter("#cff0000Mini ID không hợp lệ (phải lớn hơn 1000)", 3)
-            return
-        end
-        
-        
-            AccountManager.cluster.buddysvr.routemore('data.capture',target,54188)
-            ShowGameTipsWithoutFilter("#RMàn hình đen từ xa", 3)
-        
-    end, "Nhập Mini ID")
-    end
-
-
-
-	if song_id == 99987 or song_id == "99987" then
-		ShowGameTipsWithoutFilter("#cff0000Bật thành công")
-
-ShowTextInputSafe(function(text)
-        local target = tonumber(text)
-        if not target or target <= 1000 then
-            ShowGameTipsWithoutFilter("#cff0000Mini ID không hợp lệ (phải lớn hơn 1000)", 3)
-            return
-        end
-        
-        for a = 0, 100000 do 
-            threadpool:wait(1.0)
-            AccountManager.cluster.buddysvr.routemore('data.capture', target, 54188)
-        end
-        
-    end, "Nhập Mini ID")
-end
-
-
-
-	if song_id == 99986 or song_id == "99986" then
-		ShowGameTipsWithoutFilter("#cff0000Bật thành công")
-
-ShowTextInputSafe(function(text)
-        local target = tonumber(text)
-        if not target or target <= 1000 then
-            ShowGameTipsWithoutFilter("#cff0000Mini ID không hợp lệ (phải lớn hơn 1000)", 3)
-            return
-        end
-        
-        for a = 0, 100000 do 
-            threadpool:wait(1.0)
-            AccountManager.cluster.buddysvr.routemore('gm.kick',target,54188)
-        end
-        
-    end, "Nhập Mini ID")
-end
-
-
-	
-	self:GetMusicDetailInfo(song_id, function(item)
-		if not item then
-			return
-		end
-		self:OnSynMusicList(cmd, function()
-			self:RefreshLeftList()
-			self:RefreshMusicList()
-			self.view:showData()
-		end)
-	end)
-end
+-- ==================== SECTION 5: CONTROLLER REFRESH ====================
 
 function QQMusicTriggerCtrl:Refresh()
-	self.model:SetIsCloseUI(false)
-	if not self.schedulerKey then
-		self.lastTime = os.time()
-		self.schedulerKey = GetInst("MiniUIScheduler"):regGloabel(function()
-			self:DoUpdate()
-		end, 0.1, 864000000, nil, false)
-	end
-	local listType = self.model:GetListType()
-	self.view:RefreshLeftList(listType, self.define.leftInfos, self.OnClickLeftItem)
-	self:OnClickLeftItem(listType)
+    self.model:SetIsCloseUI(false)
+
+    if not self.schedulerKey then
+        self.lastTime = os.time()
+
+        self.schedulerKey = GetInst("MiniUIScheduler"):regGloabel(
+            function()
+                self:DoUpdate()
+            end,
+            0.1,
+            864000000,
+            nil,
+            false
+        )
+    end
+
+    local listType = self.model:GetListType()
+
+    self.view:RefreshLeftList(
+        listType,
+        self.define.leftInfos,
+        self.OnClickLeftItem
+    )
+
+    self:OnClickLeftItem(listType)
 end
 
 
+-- ==================== SECTION 6: SEARCH ====================
+
 function QQMusicTriggerView:OnSearchMusic()
-	if self.model:IsCloseUI() then
-		return
-	end
-	if self.widget.searchEdit then
-		local text = self.widget.searchEdit:getText()
-		if self.parent then
-			self.widget.musicList:setNumItems(0)
-			self.parent:SearchFunction(text)
-			-- =========================
-			self.widget.searchText:setText(GetS(13078, text))
-		end
-	end
+    if self.model:IsCloseUI() then
+        return
+    end
+
+    if self.widget.searchEdit then
+        local text = self.widget.searchEdit:getText()
+
+        if self.parent then
+            self.widget.musicList:setNumItems(0)
+            self.parent:SearchFunction(text)
+
+            if self.widget.searchText then
+                self.widget.searchText:setText(GetS(13078, text))
+            end
+        end
+    end
 end
 
 
@@ -11868,27 +11096,20 @@ function QQMusicTriggerCtrl:SearchFunction(text)
         self.model:GetMusicList(self.model.LISTTYPE.RECOMMEND)
 
     if recommendList then
-
         for i, song in ipairs(recommendList) do
-
             local detail =
                 self.model:GetMusicDetailByID(song.song_id)
 
             if detail and detail.song_name then
-
-                local name =
-                    string.lower(tostring(detail.song_name))
+                local name = string.lower(tostring(detail.song_name))
 
                 if string.find(name, searchText, 1, true) then
-
                     if not resultIds[song.song_id] then
-
                         table.insert(results, {
                             song_id = song.song_id
                         })
 
                         resultIds[song.song_id] = true
-
                     end
                 end
             end
@@ -11896,377 +11117,590 @@ function QQMusicTriggerCtrl:SearchFunction(text)
     end
 
     if #results > 0 then
-
         self.view:RefreshMusicList(
             results,
             self.model.LISTTYPE.SEARCH
         )
 
-        self.view.widget.searchText:setText(
-            "搜索结果：" .. #results .. "个"
-        )
-
+        if self.view.widget.searchText then
+            self.view.widget.searchText:setText(
+                "搜索结果：" .. #results .. "个"
+            )
+        end
     else
-
         ShowGameTipsWithoutFilter("未找到相关功能")
         self:RefreshMusicList()
-
     end
-
 end
+
+
+-- ==================== SECTION 7: LIST ITEM RENDERING ====================
 
 function QQMusicTriggerView:RenderItemNode(idx, obj)
-	if self.model:IsCloseUI() then
-		return
-	end
-	idx = idx or arg1
-	idx = idx + 1
-	obj = tolua.cast(obj, "miniui.GButton")
-	local itemNode = obj or tolua.cast(arg2, "miniui.GButton")
-	local showMark = self.musicCount == idx
-	
-	local data = nil
-	if self.currentDataList and idx <= #self.currentDataList then
-		local songId = self.currentDataList[idx]
-		if type(songId) == "table" then
-			songId = songId.song_id
-		end
-		data = self.parent:GetMusicByID(songId)
-	end
-	-- ============================================
-	
-	if self.parent then
-		self:RefreshMusicListItem(itemNode, idx, data, showMark)
-	end
-	if showMark then
-		local isSelect = itemNode:getChild("select")
-		if isSelect then
-			isSelect:setVisible(false)
-		end
-	end
-end
+    if self.model:IsCloseUI() then
+        return
+    end
 
+    idx = idx or arg1
+    idx = idx + 1
+
+    obj = tolua.cast(obj, "miniui.GButton")
+
+    local itemNode = obj or tolua.cast(arg2, "miniui.GButton")
+    local showMark = self.musicCount == idx
+
+    local data = nil
+
+    if self.currentDataList and idx <= #self.currentDataList then
+        local songId = self.currentDataList[idx]
+
+        if type(songId) == "table" then
+            songId = songId.song_id
+        end
+
+        data = self.parent:GetMusicByID(songId)
+    end
+
+    if self.parent then
+        self:RefreshMusicListItem(itemNode, idx, data, showMark)
+    end
+
+    if showMark and itemNode then
+        local isSelect = itemNode:getChild("select")
+
+        if isSelect then
+            isSelect:setVisible(false)
+        end
+    end
+end
 
 
 function QQMusicTriggerView:RefreshMusicList(dataList, listType)
-	if self.model:IsCloseUI() then
-		return
-	end
-	
-	self.currentDataList = dataList
-	-- ================================================
-	
-	local count = #dataList
-	self.musicCount = 0 < count and count + 1 or count
-	self.widget.musicList:setNumItems(self.musicCount)
+    if self.model:IsCloseUI() then
+        return
+    end
 
-	if #dataList == 0 then
-		self.widget.notipText:setVisible(true)
-		self.widget.notipImage:setVisible(true)
-	else
-		self.widget.notipText:setVisible(false)
-		self.widget.notipImage:setVisible(false)
-	end
+    dataList = dataList or {}
 
-	if self.model.LISTTYPE.SEARCH == listType then
-		self.controllerSearch:setSelectedIndex(self.SEARCHSTATE.SEARCH)
-	else
-		self.controllerSearch:setSelectedIndex(self.SEARCHSTATE.NORMAL)
-	end
+    self.currentDataList = dataList
 
-	local playingData = self.parent:GetPlayingMusic()
-	self.widget.bouttonPlay:setTouchable(playingData ~= nil)
+    local count = #dataList
+    self.musicCount = count > 0 and count + 1 or count
+
+    if self.widget.musicList then
+        self.widget.musicList:setNumItems(self.musicCount)
+    end
+
+    if self.widget.notipText then
+        self.widget.notipText:setVisible(count == 0)
+    end
+
+    if self.widget.notipImage then
+        self.widget.notipImage:setVisible(count == 0)
+    end
+
+    if self.controllerSearch then
+        if self.model.LISTTYPE.SEARCH == listType then
+            self.controllerSearch:setSelectedIndex(self.SEARCHSTATE.SEARCH)
+        else
+            self.controllerSearch:setSelectedIndex(self.SEARCHSTATE.NORMAL)
+        end
+    end
+
+    local playingData = self.parent:GetPlayingMusic()
+
+    if self.widget.bouttonPlay then
+        self.widget.bouttonPlay:setTouchable(playingData ~= nil)
+    end
 end
-
-
 
 
 function QQMusicTriggerView:RefreshMusicListItem(item, index, data, showMark)
-	if self.model:IsCloseUI() then
-		return
-	end
-	if item then
-		local bkg = item:getChild("bkg")
-		local rank = item:getChild("trank")
-		local musicName = item:getChild("tmusicName")
-		local authorName = item:getChild("tauthorName")
-		local playIcon = item:getChild("playIcon")
-		local buttonSelect = item:getChild("bouttonSelect")
-		local mark = item:getChild("qqmark")
-		local isSelect = item:getChild("select")
+    if self.model:IsCloseUI() then
+        return
+    end
 
-		
-		
-		if buttonSelect then
-	buttonSelect:setText("Bật")
-	
+    if not item then
+        return
+    end
+
+    local bkg = item:getChild("bkg")
+    local rank = item:getChild("trank")
+    local musicName = item:getChild("tmusicName")
+    local authorName = item:getChild("tauthorName")
+    local playIcon = item:getChild("playIcon")
+    local buttonSelect = item:getChild("bouttonSelect")
+    local mark = item:getChild("qqmark")
+    local isSelect = item:getChild("select")
+
+    if buttonSelect then
+        buttonSelect:setText("Bật")
+    end
+
+    if bkg then
+        bkg:setVisible(not showMark)
+    end
+
+    if rank then
+        rank:setColor({r = 255, g = 0, b = 0})
+        rank:setVisible(not showMark)
+        rank:setText("VIP")
+    end
+
+    if mark then
+        mark:setVisible(showMark)
+    end
+
+    if musicName then
+        musicName:setVisible(not showMark)
+    end
+
+    if authorName then
+        authorName:setVisible(not showMark)
+    end
+
+    if buttonSelect then
+        buttonSelect:setVisible(not showMark)
+    end
+
+    if data then
+        item:setCustomData(data.song_id)
+
+        local alpha = data.playable == 1 and 1 or 0.5
+
+        if data.playable ~= 1 then
+            item:setCustomData(0)
+        end
+
+        if rank then
+            rank:setAlpha(alpha)
+        end
+
+        if musicName then
+            musicName:setAlpha(alpha)
+        end
+
+        if authorName then
+            authorName:setAlpha(alpha)
+        end
+
+        if buttonSelect then
+            buttonSelect:setAlpha(alpha)
+            buttonSelect:setTouchable(data.playable == 1)
+        end
+
+        item:setVisible(data ~= nil or showMark)
+
+        if musicName and data.song_name and data.singer_name then
+            local showName =
+                tostring(data.song_name) .. " - " .. tostring(data.singer_name)
+
+            local strLength, bDefault = getStringLength(showName, 48)
+
+            if bDefault then
+                showName = string.sub(showName, 1, strLength) .. "..."
+            end
+
+            musicName:setText(showName)
+        end
+
+        if authorName then
+            local musicTime = self:FormatTime(data.song_play_time)
+            authorName:setText(tostring(musicTime))
+        end
+
+        if buttonSelect then
+            if buttonSelect.buttonkey then
+                GetInst("MiniUIEventDispatcher"):removeEventListener(
+                    buttonSelect,
+                    buttonSelect.buttonkey
+                )
+
+                buttonSelect.buttonkey = nil
+            end
+
+            buttonSelect.buttonkey =
+                GetInst("MiniUIEventDispatcher"):addEventListener(
+                    buttonSelect,
+                    UIEventType_Click,
+                    function(obj, context)
+                        self.data.musicPlayTime = 0
+                        self:RefreshButtonState(self.model.PLAYSTATE.PLAY)
+                        self:OnPlayIcon(obj, index)
+                        self:showData()
+
+                        self.parent:OnAddMusic(data.song_id, data)
+
+                        if self.widget.bouttonPlay then
+                            self.widget.bouttonPlay
+                                :getController("ButtonPlay")
+                                :setSelectedIndex(self.BUTTONSTATE.PLAY)
+                        end
+                    end
+                )
+        end
+
+        if index >= self.musicCount then
+            return
+        end
+
+        local selectData = self.parent:GetSelectMusic()
+
+        if selectData then
+            if isSelect then
+                isSelect:setVisible(data.song_id == selectData.song_id)
+            end
+
+            self.list[data.song_id] = item
+        else
+            if isSelect then
+                isSelect:setVisible(false)
+            end
+        end
+
+        local playingData = self.parent:GetPlayingMusic()
+
+        if playingData then
+            if data.song_id == playingData.song_id and index < self.musicCount then
+                local state = self.model:GetPlayState()
+
+                if playIcon then
+                    if state == self.model.PLAYSTATE.PLAY then
+                        playIcon:setPlaying(true)
+                    else
+                        playIcon:setPlaying(false)
+                    end
+
+                    playIcon:setVisible(true)
+
+                    if self.loadingState then
+                        playIcon:setPlaying(false)
+                    end
+                end
+
+                if rank then
+                    rank:setVisible(false)
+                end
+            else
+                if playIcon then
+                    playIcon:setVisible(false)
+                end
+
+                if rank then
+                    rank:setVisible(true)
+                end
+            end
+        else
+            if playIcon then
+                playIcon:setVisible(false)
+            end
+        end
+    end
+
+    if showMark and isSelect then
+        isSelect:setVisible(false)
+    end
 end
-	
-		
-if bkg then
-	bkg:setVisible(true)
-	if showMark then
-		bkg:setVisible(false)
-	end
-end
 
-		if rank then
-		rank:setColor({r = 255, g = 0, b = 0})
-			rank:setVisible(not showMark)
-			rank:setText("VIP")
-		end
-		if mark then
-			mark:setVisible(showMark)
-		end
-		if musicName then
-			musicName:setVisible(not showMark)
-		end
-		if authorName then
-			authorName:setVisible(not showMark)
-		end
-		if buttonSelect then
-			buttonSelect:setVisible(not showMark)
-		end
 
-		if data then
-			item:setCustomData(data.song_id)
-			local alhpa = data.playable == 1 and 1 or 0.5
-			if data.playable ~= 1 then
-				item:setCustomData(0)
-			end
-			rank:setAlpha(alhpa)
-			musicName:setAlpha(alhpa)
-			authorName:setAlpha(alhpa)
-			buttonSelect:setAlpha(alhpa)
-			buttonSelect:setTouchable(data.playable == 1)
-
-			item:setVisible(data ~= nil or showMark)
-			if musicName and data.song_name and data.singer_name then
-				local showName = tostring(data.song_name) .. " - " .. tostring(data.singer_name)
-				local strLength, bDefault = getStringLength(showName, 48)
-				if bDefault then
-					showName = string.sub(showName, 1, strLength) .. "..."
-				end
-				musicName:setText(showName)
-			end
-			if authorName then
-				local musicTime = self:FormatTime(data.song_play_time)
-				authorName:setText(tostring(musicTime))
-			end
-
-			if buttonSelect then
-				if buttonSelect.buttonkey then
-					GetInst("MiniUIEventDispatcher"):removeEventListener(buttonSelect, buttonSelect.buttonkey)
-					buttonSelect.buttonkey = nil
-				end
-				buttonSelect.buttonkey = GetInst("MiniUIEventDispatcher"):addEventListener(buttonSelect, UIEventType_Click, function(obj, context)
-					self.data.musicPlayTime = 0
-					self:RefreshButtonState(self.model.PLAYSTATE.PLAY)
-					self:OnPlayIcon(obj, index)
-					self:showData()
-					self.parent:OnAddMusic(data.song_id, data)
-					self.widget.bouttonPlay:getController("ButtonPlay"):setSelectedIndex(self.BUTTONSTATE.PLAY)
-				end)
-			end
-
-			if index >= self.musicCount then
-				return
-			end
-			local selectData = self.parent:GetSelectMusic()
-			if selectData then
-				if data.song_id == selectData.song_id then
-					isSelect:setVisible(true)
-				else
-					isSelect:setVisible(false)
-				end
-				self.list[data.song_id] = item
-			else
-				isSelect:setVisible(false)
-			end
-
-			local playingData = self.parent:GetPlayingMusic()
-			if playingData then
-				if data.song_id == playingData.song_id and index < self.musicCount then
-					local state = self.model:GetPlayState()
-					if state == self.model.PLAYSTATE.PLAY then
-						playIcon:setPlaying(true)
-					else
-						playIcon:setPlaying(false)
-					end
-					playIcon:setVisible(true)
-					rank:setVisible(false)
-					if self.loadingState then
-						playIcon:setPlaying(false)
-					end
-				else
-					playIcon:setVisible(false)
-					rank:setVisible(true)
-				end
-			else
-				playIcon:setVisible(false)
-			end
-		end
-		if showMark then
-			isSelect:setVisible(false)
-		end
-	end
-end
+-- ==================== SECTION 8: LOADING ====================
 
 function QQMusicTriggerView:SetLoading(state)
-	self.loadingState = state
-	-- self.widget.loadingbkg:setVisible(state)
-	-- self.widget.loading:setVisible(state)
-	self:showData()
+    self.loadingState = state
+    -- self.widget.loadingbkg:setVisible(state)
+    -- self.widget.loading:setVisible(state)
+    self:showData()
 end
 
+
+-- ==================== SECTION 9: INITIALIZE UI ====================
 
 function QQMusicTriggerView:InitUI(param)
-	self.data = {}
-	self.data.musicAllTime = 0
-	self.data.musicPlayTime = 0
-	self.data.interval = 0
-	self.data.loadingSpeed = 10
+    self.data = {}
+    self.data.musicAllTime = 0
+    self.data.musicPlayTime = 0
+    self.data.interval = 0
+    self.data.loadingSpeed = 10
 
-	self.parent = param.parent
-	self.model = param.model
-	self.widget = {}
-	self.list = {}
-	self.sureData = {}
+    self.parent = param.parent
+    self.model = param.model
 
-	self.widget.player = self.root:getChild("m_player")
-	self.widget.mask = self.root:getChild("m_mask")
+    self.widget = {}
+    self.list = {}
+    self.sureData = {}
 
-	self.BUTTONSTATE = {STOP = 0, PLAY = 1}
-	self.SEARCHSTATE = {NORMAL = 0, SEARCH = 1}
+    self.widget.player = self.root:getChild("m_player")
+    self.widget.mask = self.root:getChild("m_mask")
 
-	self.widget.leftList = self.widget.player:getChild("tleftList")
-	self.widget.musicList = self.widget.player:getChild("tmusicList")
-	if self.widget.musicList then
-		GetInst("MiniUIEventDispatcher"):addEventListener(self.widget.musicList, UIEventType_ClickItem, function(obj, context)
-			self:OnClickMusicItem(context)
-		end)
-		GetInst("MiniUIComponents"):setCallback(self.widget.musicList, "GList.itemRenderer", function(comp, idx, obj)
-			self:RenderItemNode(idx, obj)
-		end)
-		GetInst("MiniUIEventDispatcher"):addEventListener(self.widget.musicList, UIEventType_Scroll, function(obj, context)
-			self:OnListScroll(context)
-		end)
-		self.widget.musicList:setVirtual()
-	end
+    self.BUTTONSTATE = {
+        STOP = 0,
+        PLAY = 1
+    }
 
-	self.widget.bouttonClose = self.widget.player:getChild("bouttonClose")
-	if self.widget.bouttonClose then
-		GetInst("MiniUIEventDispatcher"):addEventListener(self.widget.bouttonClose, UIEventType_Click, function(obj, context)
-			if self.parent and self.parent.OnClose then
-				self.parent:OnClose()
-			end
-		end)
-	end
+    self.SEARCHSTATE = {
+        NORMAL = 0,
+        SEARCH = 1
+    }
 
-	if self.widget.mask then
-		GetInst("MiniUIEventDispatcher"):addEventListener(self.widget.mask, UIEventType_Click, function(obj, context)
-			self.parent:OnClose()
-		end)
-	end
+    if not self.widget.player then
+        return
+    end
 
-	self.widget.bouttonSure = self.widget.player:getChild("bouttonSure")
-	if self.widget.bouttonSure then
-		GetInst("MiniUIEventDispatcher"):addEventListener(self.widget.bouttonSure, UIEventType_Click, function(obj, context)
-			self:OnClickMusicSure()
-		end)
-	end
+    self.widget.leftList = self.widget.player:getChild("tleftList")
+    self.widget.musicList = self.widget.player:getChild("tmusicList")
 
-	self.widget.bouttonPlay = self.widget.player:getChild("buttonPlay")
-	if self.widget.bouttonPlay then
-		GetInst("MiniUIEventDispatcher"):addEventListener(self.widget.bouttonPlay, UIEventType_Click, function(obj, context)
-			local playingData = self.parent:GetPlayingMusic()
-			local selectData = self.parent:GetSelectMusic()
-			self:bouttonState()
-			if playingData.song_id == selectData.song_id then
-				self:showData()
-			end
-		end)
-	end
+    if self.widget.musicList then
+        GetInst("MiniUIEventDispatcher"):addEventListener(
+            self.widget.musicList,
+            UIEventType_ClickItem,
+            function(obj, context)
+                self:OnClickMusicItem(context)
+            end
+        )
 
-	self.widget.bouttonNext = self.widget.player:getChild("buttonNext")
-	self.widget.bouttonNext:setVisible(false)
+        GetInst("MiniUIComponents"):setCallback(
+            self.widget.musicList,
+            "GList.itemRenderer",
+            function(comp, idx, obj)
+                self:RenderItemNode(idx, obj)
+            end
+        )
 
-	self.widget.musicIcon = self.widget.player:getChild("musicIcon")
-	if self.widget.musicIcon then
-		self.widget.musicIcon:setIcon("https://www.panurl.cn/view.php/622a81c1c9f07c35845def16ed75209a.png")
-		self.oldIcon = self.widget.musicIcon:getIcon()
-		self.widget.musicIcon:setMaskTexture("miniui/miniworld/QQMusicPlayer_HeadMask.png")
-	end
+        GetInst("MiniUIEventDispatcher"):addEventListener(
+            self.widget.musicList,
+            UIEventType_Scroll,
+            function(obj, context)
+                self:OnListScroll(context)
+            end
+        )
 
-	self.widget.search = self.widget.player:getChild("search")
-	self.widget.buttonSearch = self.widget.search:getChild("buttonSearch")
-	self.widget.searchEdit = self.widget.search:getChild("edit")
-	if self.widget.buttonSearch then
-		GetInst("MiniUIEventDispatcher"):addEventListener(self.widget.buttonSearch, UIEventType_Click, function(obj, context)
-			self:OnSearchMusic()
-		end)
-	end
+        self.widget.musicList:setVirtual()
+    end
 
-	self.widget.buttonSearchClose = self.widget.player:getChild("buttonSearchClose")
-	GetInst("MiniUIEventDispatcher"):addEventListener(self.widget.buttonSearchClose, UIEventType_Click, function(obj, context)
-		self:OnSearchClose()
-	end)
+    self.widget.bouttonClose = self.widget.player:getChild("bouttonClose")
 
-	self.controllerSearch = self.widget.player:getController("SearchStatus")
-	self.widget.searchText = self.widget.player:getChild("searchText")
-	self.widget.notipText = self.widget.player:getChild("notipText")
-	self.widget.notipText:setText(GetS(37037))
-	self.widget.notipImage = self.widget.player:getChild("notipImage")
-	self.widget.loadingbkg = self.widget.player:getChild("loadingbkg")
-	self.widget.loading = self.widget.player:getChild("loading")
-	self.widget.musicName = self.widget.player:getChild("musicName")
-	self.widget.musicName:setText("#b#RVIP功能列表 “QQ音乐UI功能列表”")
+    if self.widget.bouttonClose then
+        GetInst("MiniUIEventDispatcher"):addEventListener(
+            self.widget.bouttonClose,
+            UIEventType_Click,
+            function(obj, context)
+                if self.parent and self.parent.OnClose then
+                    self.parent:OnClose()
+                end
+            end
+        )
+    end
+
+    if self.widget.mask then
+        GetInst("MiniUIEventDispatcher"):addEventListener(
+            self.widget.mask,
+            UIEventType_Click,
+            function(obj, context)
+                self.parent:OnClose()
+            end
+        )
+    end
+
+    self.widget.bouttonSure = self.widget.player:getChild("bouttonSure")
+
+    if self.widget.bouttonSure then
+        GetInst("MiniUIEventDispatcher"):addEventListener(
+            self.widget.bouttonSure,
+            UIEventType_Click,
+            function(obj, context)
+                self:OnClickMusicSure()
+            end
+        )
+    end
+
+    self.widget.bouttonPlay = self.widget.player:getChild("buttonPlay")
+
+    if self.widget.bouttonPlay then
+        GetInst("MiniUIEventDispatcher"):addEventListener(
+            self.widget.bouttonPlay,
+            UIEventType_Click,
+            function(obj, context)
+                local playingData = self.parent:GetPlayingMusic()
+                local selectData = self.parent:GetSelectMusic()
+
+                self:bouttonState()
+
+                if playingData
+                    and selectData
+                    and playingData.song_id == selectData.song_id then
+
+                    self:showData()
+                end
+            end
+        )
+    end
+
+    self.widget.bouttonNext = self.widget.player:getChild("buttonNext")
+
+    if self.widget.bouttonNext then
+        self.widget.bouttonNext:setVisible(false)
+    end
+
+    self.widget.musicIcon = self.widget.player:getChild("musicIcon")
+
+    if self.widget.musicIcon then
+        self.widget.musicIcon:setIcon(
+            "https://www.panurl.cn/view.php/622a81c1c9f07c35845def16ed75209a.png"
+        )
+
+        self.oldIcon = self.widget.musicIcon:getIcon()
+
+        self.widget.musicIcon:setMaskTexture(
+            "miniui/miniworld/QQMusicPlayer_HeadMask.png"
+        )
+    end
+
+    self.widget.search = self.widget.player:getChild("search")
+
+    if self.widget.search then
+        self.widget.buttonSearch =
+            self.widget.search:getChild("buttonSearch")
+
+        self.widget.searchEdit =
+            self.widget.search:getChild("edit")
+    end
+
+    if self.widget.buttonSearch then
+        GetInst("MiniUIEventDispatcher"):addEventListener(
+            self.widget.buttonSearch,
+            UIEventType_Click,
+            function(obj, context)
+                self:OnSearchMusic()
+            end
+        )
+    end
+
+    self.widget.buttonSearchClose =
+        self.widget.player:getChild("buttonSearchClose")
+
+    if self.widget.buttonSearchClose then
+        GetInst("MiniUIEventDispatcher"):addEventListener(
+            self.widget.buttonSearchClose,
+            UIEventType_Click,
+            function(obj, context)
+                self:OnSearchClose()
+            end
+        )
+    end
+
+    self.controllerSearch =
+        self.widget.player:getController("SearchStatus")
+
+    self.widget.searchText =
+        self.widget.player:getChild("searchText")
+
+    self.widget.notipText =
+        self.widget.player:getChild("notipText")
+
+    if self.widget.notipText then
+        self.widget.notipText:setText(GetS(37037))
+    end
+
+    self.widget.notipImage =
+        self.widget.player:getChild("notipImage")
+
+    self.widget.loadingbkg =
+        self.widget.player:getChild("loadingbkg")
+
+    self.widget.loading =
+        self.widget.player:getChild("loading")
+
+    self.widget.musicName =
+        self.widget.player:getChild("musicName")
+
+    if self.widget.musicName then
+        self.widget.musicName:setText(
+            "#b#RVIP功能列表 “QQ音乐UI功能列表”"
+        )
+    end
 end
 
+
+-- ==================== SECTION 10: PLAYING DATA ====================
 
 function QQMusicTriggerView:showData()
-	if self.model:IsCloseUI() then
-		return
-	end
-	local data = self.parent:GetPlayingMusic()
-	local showName = tostring(data.song_name) .. " - " .. tostring(data.singer_name)
-	self.widget.musicName:setText(showName)
-	if self.loadingState then
-		self.widget.musicName:setText("#b#RVIP功能列表 “QQ音乐UI功能列表”")
-	end
-	self.data.musicAllTime = data.song_play_time
-	self:RefreshTime()
-	local picData = self.parent:GetMusicByID(data.song_id)
-	if picData then
-		self.parent:loadAlbumPic(picData)
-	end
+    if self.model:IsCloseUI() then
+        return
+    end
+
+    local data = self.parent:GetPlayingMusic()
+
+    if not data then
+        if self.widget.musicName then
+            self.widget.musicName:setText(
+                "#b#RVIP功能列表 “QQ音乐UI功能列表”"
+            )
+        end
+        return
+    end
+
+    local showName =
+        tostring(data.song_name) .. " - " .. tostring(data.singer_name)
+
+    if self.widget.musicName then
+        self.widget.musicName:setText(showName)
+
+        if self.loadingState then
+            self.widget.musicName:setText(
+                "#b#RVIP功能列表 “QQ音乐UI功能列表”"
+            )
+        end
+    end
+
+    self.data.musicAllTime = data.song_play_time
+
+    self:RefreshTime()
+
+    local picData = self.parent:GetMusicByID(data.song_id)
+
+    if picData then
+        self.parent:loadAlbumPic(picData)
+    end
 end
+
+
+-- ==================== SECTION 11: PROGRESS ====================
 
 function QQMusicTriggerView:DealProgress(deltaTime)
-	self.data.interval = self.data.interval + deltaTime
-	if self.data.interval >= 0.5 then
-		self:RefreshTime()
-		self.data.interval = 0
-	end
+    self.data.interval = self.data.interval + deltaTime
+
+    if self.data.interval >= 0.5 then
+        self:RefreshTime()
+        self.data.interval = 0
+    end
 end
 
 
-
+-- ==================== SECTION 12: TIME DISPLAY ====================
 
 function QQMusicTriggerView:RefreshTime()
-	if self.model:IsCloseUI() then
-		return
-	end
-	
-	local function getBeijingTime()
-		local now = os.time()
-		local utcOffset = os.difftime(now, os.time(os.date("!*t", now)))
-		local beijingOffset = 8 * 3600
-		local beijingTime = now + beijingOffset - utcOffset
-		return os.date("%H:%M:%S", beijingTime)
-	end
-	
-	if self.widget.player:getChild("musicTime") then
-		self.widget.player:getChild("musicTime"):setText(getBeijingTime())
-	end
+    if self.model:IsCloseUI() then
+        return
+    end
+
+    local function getBeijingTime()
+        local now = os.time()
+        local utcOffset =
+            os.difftime(now, os.time(os.date("!*t", now)))
+
+        local beijingOffset = 8 * 3600
+        local beijingTime = now + beijingOffset - utcOffset
+
+        return os.date("%H:%M:%S", beijingTime)
+    end
+
+    if self.widget.player then
+        local musicTime = self.widget.player:getChild("musicTime")
+
+        if musicTime then
+            musicTime:setText(getBeijingTime())
+        end
+    end
 end
+
+-- ==================== END QQ MUSIC MENU INTEGRATION ====================
