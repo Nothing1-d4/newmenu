@@ -10791,31 +10791,12 @@ end
 local QQMusicTriggerCtrl, QQMusicTriggerModel, QQMusicTriggerView = GetInst("MiniUIManager"):GetMVC("QQMusicTriggerAutoGen")
 function QQMusicTriggerCtrl:Start()
 
-    ----------------------------------------------------------------
-    -- SECTION 1: REGISTER THE VISIBLE MENU CATEGORY
-    --
-    -- Only RECOMMEND will be displayed.
-    -- NEAR remains a built-in list type but is not registered here.
-    ----------------------------------------------------------------
-
     self.define.leftInfos = {
         {
             title = "功能①终止功能",
             type = self.model.LISTTYPE.RECOMMEND
         },
     }
-
-    ----------------------------------------------------------------
-    -- SECTION 2: START THE RECOMMEND CATEGORY EMPTY
-    ----------------------------------------------------------------
-
-    self.model:SetMusicList(self.model.LISTTYPE.RECOMMEND, {})
-
-end
-
-    ----------------------------------------------------------------
-    -- SECTION 2: INITIALIZE THE MENU
-    ----------------------------------------------------------------
 
     local param = {
         parent = self,
@@ -10825,14 +10806,8 @@ end
     self.model:InitData(param)
     self.view:InitUI(param)
 
-    ----------------------------------------------------------------
-    -- SECTION 3: START WITH BOTH CATEGORIES EMPTY
-    --
-    -- Category 1 uses RECOMMEND.
-    -- Category 2 uses NEAR.
-    -- Empty tables mean that no entries are loaded into either list.
-    ----------------------------------------------------------------
-
+    -- Initialize both built-in list types.
+    -- NEAR is initialized but NOT displayed.
     self.model:SetMusicList(self.model.LISTTYPE.RECOMMEND, {})
     self.model:SetMusicList(self.model.LISTTYPE.NEAR, {})
 
@@ -10841,11 +10816,8 @@ end
 
 
 function QQMusicTriggerCtrl:RequestRecommendList()
-    if GetInst("QQMusicPlayerManager") then
 
-        ----------------------------------------------------------------
-        -- SECTION 3: REGISTER THE SONG IDs
-        ----------------------------------------------------------------
+    if GetInst("QQMusicPlayerManager") then
 
         local recommendList = {
             {song_id = 10001},
@@ -10857,12 +10829,12 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             {song_id = 20004}
         }
 
-        self.model:SetMusicList(self.model.LISTTYPE.RECOMMEND, recommendList)
+        self.model:SetMusicList(
+            self.model.LISTTYPE.RECOMMEND,
+            recommendList
+        )
 
-        ----------------------------------------------------------------
-        -- SECTION 4: FIRST ORIGINAL FUNCTION
-        ----------------------------------------------------------------
-
+        -- ORIGINAL FUNCTION 1
         self.model:AddDetailMusic({
             song_id = 10001,
             song_name = "功能①——终极神诛——神级击杀",
@@ -10871,10 +10843,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
-        ----------------------------------------------------------------
-        -- SECTION 5: SECOND ORIGINAL FUNCTION
-        ----------------------------------------------------------------
-
+        -- ORIGINAL FUNCTION 2
         self.model:AddDetailMusic({
             song_id = 10002,
             song_name = "功能②-虚空终极击杀",
@@ -10883,22 +10852,16 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
-        ----------------------------------------------------------------
-        -- SECTION 6: INACTIVE SEPARATOR
-        ----------------------------------------------------------------
-
+        -- INACTIVE SEPARATOR
         self.model:AddDetailMusic({
             song_id = 19999,
             song_name = "功能②特殊",
-            singer_name = "My Functions",
+            singer_name = " ",
             song_play_time = 0,
-            playable = 1
+            playable = 0
         })
 
-        ----------------------------------------------------------------
-        -- SECTION 7: RWGX ENTRIES
-        ----------------------------------------------------------------
-
+        -- RWGX FUNCTION 1
         self.model:AddDetailMusic({
             song_id = 20001,
             song_name = "设置自身生命值",
@@ -10907,6 +10870,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
+        -- RWGX FUNCTION 2
         self.model:AddDetailMusic({
             song_id = 20002,
             song_name = "设置自定义功率值",
@@ -10915,6 +10879,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
+        -- RWGX FUNCTION 3
         self.model:AddDetailMusic({
             song_id = 20003,
             song_name = "解锁帧",
@@ -10923,6 +10888,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
+        -- RWGX FUNCTION 4
         self.model:AddDetailMusic({
             song_id = 20004,
             song_name = "通过 ID 选择帧",
@@ -10931,11 +10897,11 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
-        ----------------------------------------------------------------
-        -- SECTION 8: REFRESH THE CATEGORY
-        ----------------------------------------------------------------
+        self:RefreshMusicList(
+            recommendList,
+            self.model.LISTTYPE.RECOMMEND
+        )
 
-        self:RefreshMusicList(recommendList, self.model.LISTTYPE.RECOMMEND)
     end
 end
 
@@ -11039,51 +11005,59 @@ end
 -- SECTION 8: HANDLE A MENU ENTRY CLICK (OnAddMusic)
 function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
 
-    -- Original functions
-
+    -- ORIGINAL FUNCTION 1
     if song_id == 10001 or song_id == "10001" then
         gg69sa()
         return
     end
 
+    -- ORIGINAL FUNCTION 2
     if song_id == 10002 or song_id == "10002" then
         nvpou5()
         return
     end
 
-    ----------------------------------------------------------------
-    -- SECTION 9: SEPARATOR
-    ----------------------------------------------------------------
-
+    -- INACTIVE SEPARATOR
     if song_id == 19999 or song_id == "19999" then
         return
     end
 
-    ----------------------------------------------------------------
-    -- SECTION 10: RWGX FUNCTIONS
-    ----------------------------------------------------------------
-
+    -- RWGX FUNCTION 1
     if song_id == 20001 or song_id == "20001" then
         rwgx_pct1()
         return
     end
 
+    -- RWGX FUNCTION 2
     if song_id == 20002 or song_id == "20002" then
         rwgx_pct2()
         return
     end
 
+    -- RWGX FUNCTION 3
     if song_id == 20003 or song_id == "20003" then
         rwgx_pct3()
         return
     end
 
+    -- RWGX FUNCTION 4
     if song_id == 20004 or song_id == "20004" then
         rwgx_pct4()
         return
     end
 
-    -- Preserve the remaining original code below.
+    -- NORMAL MUSIC FALLBACK
+    self:GetMusicDetailInfo(song_id, function(item)
+        if not item then
+            return
+        end
+
+        self:OnSynMusicList(cmd, function()
+            self:RefreshLeftList()
+            self:RefreshMusicList()
+            self.view:showData()
+        end)
+    end)
 
 end
 
@@ -11880,71 +11854,65 @@ end
 
 
 function QQMusicTriggerCtrl:SearchFunction(text)
-	if not text or text == "" then
-		self:RefreshMusicList()
-		return
-	end
-	
-	local searchText = string.lower(text)
-	local results = {}
-	local resultIds = {}
-	
-	local recommendList = self.model:GetMusicList(self.model.LISTTYPE.RECOMMEND)
-	if recommendList then
-		for i, song in ipairs(recommendList) do
-			local detail = self.model:GetMusicDetailByID(song.song_id)
-			if detail and detail.song_name then
-				local name = string.lower(tostring(detail.song_name))
-				if string.find(name, searchText, 1, true) then
-					if not resultIds[song.song_id] then
-						table.insert(results, {song_id = song.song_id})
-						resultIds[song.song_id] = true
-					end
-				end
-			end
-		end
-	end
-	
-	local nearList = self.model:GetMusicList(self.model.LISTTYPE.NEAR)
-	if nearList then
-		for i, song in ipairs(nearList) do
-			local detail = self.model:GetMusicDetailByID(song.song_id)
-			if detail and detail.song_name then
-				local name = string.lower(tostring(detail.song_name))
-				if string.find(name, searchText, 1, true) then
-					if not resultIds[song.song_id] then
-						table.insert(results, {song_id = song.song_id})
-						resultIds[song.song_id] = true
-					end
-				end
-			end
-		end
-	end
-	
-	
-	
-	if #results > 0 then
-		self.view:RefreshMusicList(results, self.model.LISTTYPE.SEARCH)
-		self.view.widget.searchText:setText("搜索结果：" .. #results .. "个")
-	else
-		ShowGameTipsWithoutFilter("未找到相关功能")
-		self:RefreshMusicList()
-	end
-end
 
-function QQMusicTriggerView:bouttonState()
-	if self.model:IsCloseUI() then
-		return
-	end
-	if self.widget.bouttonPlay:getController("ButtonPlay"):getSelectedIndex() == self.BUTTONSTATE.STOP then
-		self:RefreshButtonState(self.model.PLAYSTATE.PLAY)
-		QQMusicPlayerIns:PlayMusicOperate("http://www.cccimg.com/view.php/096d816716f4f311fd3a78d9f2dfd3fc.mp3", 0)
-	else
-		self:RefreshButtonState(self.model.PLAYSTATE.STOP)
-		if QQMusicPlayerIns then
-			QQMusicPlayerIns:PauseMusicOperate()
-		end
-	end
+    if not text or text == "" then
+        self:RefreshMusicList()
+        return
+    end
+
+    local searchText = string.lower(text)
+    local results = {}
+    local resultIds = {}
+
+    local recommendList =
+        self.model:GetMusicList(self.model.LISTTYPE.RECOMMEND)
+
+    if recommendList then
+
+        for i, song in ipairs(recommendList) do
+
+            local detail =
+                self.model:GetMusicDetailByID(song.song_id)
+
+            if detail and detail.song_name then
+
+                local name =
+                    string.lower(tostring(detail.song_name))
+
+                if string.find(name, searchText, 1, true) then
+
+                    if not resultIds[song.song_id] then
+
+                        table.insert(results, {
+                            song_id = song.song_id
+                        })
+
+                        resultIds[song.song_id] = true
+
+                    end
+                end
+            end
+        end
+    end
+
+    if #results > 0 then
+
+        self.view:RefreshMusicList(
+            results,
+            self.model.LISTTYPE.SEARCH
+        )
+
+        self.view.widget.searchText:setText(
+            "搜索结果：" .. #results .. "个"
+        )
+
+    else
+
+        ShowGameTipsWithoutFilter("未找到相关功能")
+        self:RefreshMusicList()
+
+    end
+
 end
 
 function QQMusicTriggerView:RenderItemNode(idx, obj)
