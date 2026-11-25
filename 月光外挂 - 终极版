@@ -10280,10 +10280,10 @@ function QQMusicTriggerCtrl:RequestRecommendList()
 
         self.model:AddDetailMusic({
             song_id = 10001,
-            song_name = "gg69sa",
+            song_name = "功能①——终极神诛——神级击杀",
             singer_name = "My Functions",
             song_play_time = 0,
-            playable = 0
+            playable = 1
         })
 
         self:RefreshMusicList(recommendList, self.model.LISTTYPE.RECOMMEND)
