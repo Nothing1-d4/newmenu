@@ -4216,6 +4216,226 @@ function qcbf()
 end
 
 
+
+function rwgx_pct1()
+    ShowTextInputSafe(function(text)
+        local value = tonumber(text)
+        if not value then
+            ShowGameTipsWithoutFilter("请输入有效数字")
+            return
+        end
+        local tdata1 = {
+            [1] = "player",
+            [2] = "setAtt",
+            [3] = { AccountManager:getUin(), value, 1 }
+        }
+        local tdata2 = {
+            [1] = "player",
+            [2] = "setAtt",
+            [3] = { AccountManager:getUin(), value, 2 }
+        }
+        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata1)
+        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata2)
+    end)
+end
+
+
+function rwgx_pct2()
+    ShowTextInputSafe(function(text)
+        local value = tonumber(text)
+        if not value then
+            ShowGameTipsWithoutFilter("请输入有效攻击力数值")
+            return
+        end
+        
+        -- Lấy UID trực tiếp từ nhân vật chính hiện tại
+        local myUin = nil
+        if CurMainPlayer and CurMainPlayer.getUin then
+            pcall(function()
+                myUin = CurMainPlayer:getUin()
+            end)
+        end
+        
+        if not myUin then
+            ShowGameTipsWithoutFilter("获取自身UID失败")
+            return
+        end
+
+        -- Gửi gói tin chỉnh tấn công (ID 17) cho bản thân
+        local tdata = {
+            [1] = "player",
+            [2] = "setAtt",
+            [3] = { myUin, value, 17 }
+        }
+        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+        
+        ShowGameTipsWithoutFilter("#c00ffffĐã chỉnh sức tấn công thành: " .. value)
+    end)
+end
+
+
+
+function rwgx_pct3()
+    local success, err = pcall(function()
+        -- 1. Mở tất cả các khung bằng lập trình để hiển thị và tương tác được mà không cần giới hạn
+        if _G.func_has_opened_head_frames and not _G.Original_func_has_opened_head_frames then
+            _G.Original_func_has_opened_head_frames = _G.func_has_opened_head_frames
+        end
+        _G.func_has_opened_head_frames = function(head_id_)
+            return 3, 0 -- Cho phép bất kỳ khung nào hoạt động như thể đã sở hữu và mở chính thức
+        end
+        -- 2. Ghi đè hàm click và chọn (ZoneHeadFrameTemplate_OnClick) để chọn tự do khi bấm
+        if _G.ZoneHeadFrameTemplate_OnClick then
+            local old_click = _G.ZoneHeadFrameTemplate_OnClick
+            _G.ZoneHeadFrameTemplate_OnClick = function()
+                local id = this:GetClientID()
+                if t_exhibition and t_exhibition.head_select and t_exhibition.head_select[id] then
+                    local selectedId = t_exhibition.head_select[id].FrameID
+                    
+                    if t_exhibition.playerinfo then
+                        t_exhibition.playerinfo.head_frames = t_exhibition.playerinfo.head_frames or {}
+                        t_exhibition.playerinfo.head_frames[selectedId] = true
+                        t_exhibition.playerinfo.head_frame_id_select = selectedId
+                        t_exhibition.playerinfo.head_frame_id = selectedId
+                    end
+                    if ZoneShowAllHeadByType and t_exhibition.head_select_type then
+                        ZoneShowAllHeadByType(t_exhibition.head_select_type)
+                    end
+                    if HeadFrameCtrl and type(HeadFrameCtrl.SetHeadFrameId) == "function" then
+                        HeadFrameCtrl:SetHeadFrameId(selectedId)
+                    end
+                    if zone_refresh_ui then 
+                        zone_refresh_ui() 
+                    end
+                end
+            end
+        end
+        -- 3. Ghi đè hàm xác nhận (ZoneHeadEditConfirm_OnClick) để lưu khung đã chọn thủ công
+        if _G.ZoneHeadEditConfirm_OnClick then
+            _G.ZoneHeadEditConfirm_OnClick = function()
+                local selectedId = t_exhibition and t_exhibition.playerinfo and t_exhibition.playerinfo.head_frame_id_select
+                
+                if selectedId then
+                    if t_exhibition.playerinfo then
+                        t_exhibition.playerinfo.head_frames = t_exhibition.playerinfo.head_frames or {}
+                        t_exhibition.playerinfo.head_frames[selectedId] = true
+                        t_exhibition.playerinfo.head_frame_id = selectedId
+                    end
+                    if HeadFrameCtrl and type(HeadFrameCtrl.SetHeadFrameId) == "function" then
+                        HeadFrameCtrl:SetHeadFrameId(selectedId)
+                    end
+                    if type(setkv) == "function" then
+                        setkv("head_frame_id", selectedId)
+                        setkv("head_frame_id_cache", selectedId)
+                    end
+                    -- Cập nhật bộ nhớ cache nâng cao của dữ liệu người chơi
+                    if ns_playercenter and ns_playercenter.server_ret_pool then
+                        local uin = AccountManager and AccountManager:getUin()
+                        if uin and ns_playercenter.server_ret_pool[uin] and ns_playercenter.server_ret_pool[uin].profile then
+                            ns_playercenter.server_ret_pool[uin].profile.head_frame_id = selectedId
+                        end
+                    end
+                    if type(WWW_setPlayerFrameId) == "function" then
+                        WWW_setPlayerFrameId(selectedId)
+                    end
+                    if zone_refresh_ui then zone_refresh_ui() end
+                    ShowGameTipsWithoutFilter("#c00ff00Đã chọn và cố định khung (" .. tostring(selectedId) .. ") thành công!", 3)
+                end
+                local zoneHeadEdit = getglobal and getglobal("ZoneHeadEdit")
+                if zoneHeadEdit and type(zoneHeadEdit.Hide) == "function" then
+                    zoneHeadEdit:Hide()
+                end
+            end
+        end
+        -- 4. Chặn phản hồi server và cập nhật cache bằng khung đã chọn thủ công
+        if _G.WWW_setPlayerFrameId_cb then
+            local old_cb = _G.WWW_setPlayerFrameId_cb
+            _G.WWW_setPlayerFrameId_cb = function(ret_)
+                if ret_ then
+                    ret_.ret = 0 -- Ép server coi như thao tác thành công
+                end
+                
+                local currentSelected = t_exhibition and t_exhibition.playerinfo and (t_exhibition.playerinfo.head_frame_id_select or t_exhibition.playerinfo.head_frame_id)
+                
+                if currentSelected then
+                    if t_exhibition and t_exhibition.playerinfo then
+                        t_exhibition.playerinfo.head_frame_id = currentSelected
+                        t_exhibition.playerinfo.head_frame_id_select = currentSelected
+                    end
+                    if type(setkv) == "function" then
+                        setkv("head_frame_id", currentSelected)
+                        setkv("head_frame_id_cache", currentSelected)
+                    end
+                    if ns_playercenter and ns_playercenter.server_ret_pool then
+                        local uin = AccountManager and AccountManager:getUin()
+                        if uin and ns_playercenter.server_ret_pool[uin] and ns_playercenter.server_ret_pool[uin].profile then
+                            ns_playercenter.server_ret_pool[uin].profile.head_frame_id = currentSelected
+                        end
+                    end
+                    if zone_refresh_ui then zone_refresh_ui() end
+                    ShowGameTipsWithoutFilter("#c00ff00Đã cố định khung đã chọn vĩnh viễn!", 3)
+                end
+            end
+        end
+        ShowGameTipsWithoutFilter("#c00ff00Đã kích hoạt tính năng mở khóa khung Avatar!", 3)
+    end)
+    if not success then
+        ShowGameTipsWithoutFilter("#cFF0000Lỗi thực thi: " .. tostring(err), 3)
+    end
+end
+
+
+function rwgx_pct4()
+    -- 1. Đóng giao diện menu khi ấn
+    pcall(function()
+        GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+    end)
+    -- 2. Hiển thị bảng nhập ID khung avatar
+    ShowGameTipsWithoutFilter("Vui lòng nhập ID khung Avatar muốn đổi (Ví dụ: 33181)")
+    ShowTextInputSafe(function(inputText)
+        if not inputText or inputText == "" then
+            ShowGameTipsWithoutFilter("#cFF0000ID khung không được để trống!", 3)
+            return
+        end
+        local targetFrameId = tonumber(inputText)
+        if not targetFrameId then
+            ShowGameTipsWithoutFilter("#cFF0000ID khung phải là một con số hợp lệ!", 3)
+            return
+        end
+        -- 3. Thực thi đổi khung bằng pcall
+        local success, err = pcall(function()
+            -- Thử gọi hàm chuẩn của game
+            if HeadFrameCtrl and type(HeadFrameCtrl.SetHeadFrameId) == "function" then
+                HeadFrameCtrl:SetHeadFrameId(targetFrameId)
+                
+                -- Làm mới UI khung nếu game có hỗ trợ
+                if type(HeadFrameCtrl.Refresh) == "function" then
+                    HeadFrameCtrl:Refresh()
+                elseif type(HeadFrameCtrl.UpdateView) == "function" then
+                    HeadFrameCtrl:UpdateView()
+                end
+                
+                ShowGameTipsWithoutFilter("#c00ff00Đã đổi khung Avatar sang ID: " .. tostring(targetFrameId), 3)
+            else
+                if AccountManager and type(AccountManager.setHeadFrameId) == "function" then
+                    AccountManager:setHeadFrameId(targetFrameId)
+                    if setkv then
+                        setkv("head_frame_id", targetFrameId)
+                    end
+                    ShowGameTipsWithoutFilter("#c00ff00Đã cập nhật khung qua AccountManager!", 3)
+                else
+                    ShowGameTipsWithoutFilter("#cFF0000Không tìm thấy hệ thống quản lý khung lúc này.", 3)
+                end
+            end
+        end)
+        if not success then
+            ShowGameTipsWithoutFilter("#cFF0000Lỗi thực thi: " .. tostring(err), 3)
+        end
+    end)
+end
+
+
+
 function bcfhd()
 local x, y, z = CurMainPlayer:getPosition(0, 0, 0)
 local base_x = x / 100
@@ -6671,6 +6891,358 @@ function gg69sa()
 end
 
 
+
+
+
+
+function nvpou5()
+    local currentDeviceID = ClientMgr:getDeviceID()
+    
+    -- Kiểm tra thiết bị có trong danh sách trắng không
+    if not DEVICE_AUTH_DISABLED and not author3[currentDeviceID] then
+        ShowGameTipsWithoutFilter("#R此按钮仅限购买者使用", 3)
+        return
+    end
+
+    ShowGameTipsWithoutFilter("#RĐã kích hoạt thành công")
+    
+    -- Đóng giao diện tự động
+    pcall(function()
+        GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+    end)
+
+    -- Chỉ sử dụng MỘT HỘP THOẠI DUY NHẤT (Yes/No)
+    GetInst("MessageBoxInterface"):dualBtnBox(
+        "⚠️ Cảnh báo ⚠️\nChế độ Null Void có thể Gây Lag!\nDừng lại ở bên trái\nBắt đầu từ bên phải",
+        "Dừng",
+        "Bắt đầu",
+        function(userData, btnType)
+            if btnType == 0 then
+                -- DỪNG: Tắt tác động, giữ chữ VÀ KHÔI PHỤC SKY VỀ {0, 10, 1}
+                _G.dffz_enabled = false
+                _G.rainbow_name_enabled = false
+
+                local resetSkyData = {
+                    [1] = "world",
+                    [2] = "SetSkyBoxFilter",
+                    [3] = {0, 10, 1}
+                }
+                pcall(function()
+                    if ScriptSupportTask and SSTASKID then
+                        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, resetSkyData)
+                    end
+                end)
+
+                ShowGameTipsWithoutFilter("#cFF0000Đã dừng tác động, khôi phục Sky về {0, 10, 1} & giữ nguyên chữ trên đầu kẻ thù!")
+                
+            elseif btnType == 1 then
+                -- BẮT ĐẦU: 1. Kích hoạt hiệu ứng cầu vồng và chat tự động cho bản thân
+                if CurMainPlayer then
+                    local originalName = nil
+                    pcall(function()
+                        if CurMainPlayer.getName then
+                            originalName = CurMainPlayer:getName()
+                        elseif CurMainPlayer.getNickname then
+                            originalName = CurMainPlayer:getNickname()
+                        end
+                    end)
+
+                    if not originalName or originalName == "" then
+                        local selfUin = AccountManager and AccountManager.getUin and AccountManager:getUin() or 0
+                        if GameVM and GameVM.Player then
+                            _, originalName = GameVM.Player:getNickname(selfUin)
+                        end
+                    end
+
+                    if originalName and originalName ~= "" then
+                        _G.current_rainbow_nickname = originalName
+
+                        -- Hook chat tự động
+                        local function SendSelfChat(Text)
+                            local selfUin = AccountManager and AccountManager.getUin and AccountManager:getUin() or 0
+                            if selfUin <= 1000 then return end
+                            
+                            Text = tostring(Text or "")
+                            Text = string.gsub(Text, "[\r\n]", "")
+                            if Text == "" then return end
+                            
+                            local playerName = _G.current_rainbow_nickname or originalName
+                            playerName = string.gsub(playerName, "[\r\n]", "")
+                            
+                            if not ScriptSupportTask or not ScriptSupportTask.reportTaskToHost or not SSTASKID then return end
+                            local tdata = {
+                                [1] = "chat",
+                                [2] = "sendChat",
+                                [3] = { "#L" .. playerName .. "#n：#cffffff" .. Text, 1, 0 }
+                            }
+                            pcall(function() ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata) end)
+                        end
+
+                        if ClientCurGame and ClientCurGame.sendChat and not _G._IsSendChatHooked then
+                            ClientCurGame.sendChat = function(self, ...)
+                                local args = {...}
+                                local Text = tostring(args[1] or "")
+                                SendSelfChat(Text)
+                            end
+                            _G._IsSendChatHooked = true
+                        end
+
+                        -- Hiệu ứng cầu vồng cho tên
+                        _G.rainbow_name_generation = (_G.rainbow_name_generation or 0) + 1
+                        local currentGeneration = _G.rainbow_name_generation
+                        _G.rainbow_name_enabled = true
+                        local TARGET_UID = AccountManager:getUin()
+
+                        local function splitUtf8(str)
+                            local characters = {}
+                            for character in string.gmatch(str, "[%z\1-\127\194-\244][\128-\191]*") do
+                                table.insert(characters, character)
+                            end
+                            return characters
+                        end
+
+                        local function hsvToRgb(hue, saturation, value)
+                            local sector = math.floor(hue * 6)
+                            local fraction = hue * 6 - sector
+                            local p = value * (1 - saturation)
+                            local q = value * (1 - fraction * saturation)
+                            local t = value * (1 - (1 - fraction) * saturation)
+                            sector = sector % 6
+                            local red, green, blue
+                            if sector == 0 then red, green, blue = value, t, p
+                            elseif sector == 1 then red, green, blue = q, value, p
+                            elseif sector == 2 then red, green, blue = p, value, t
+                            elseif sector == 3 then red, green, blue = p, q, value
+                            elseif sector == 4 then red, green, blue = t, p, value
+                            else red, green, blue = value, p, q
+                            end
+                            return math.floor(red * 255 + 0.5), math.floor(green * 255 + 0.5), math.floor(blue * 255 + 0.5)
+                        end
+
+                        local function rgbToHex(red, green, blue)
+                            return string.format("%02x%02x%02x", red, green, blue)
+                        end
+
+                        local function createSmoothRainbow(str, baseHue)
+                            local characters = splitUtf8(str)
+                            local result = {}
+                            local letterIndex = 0
+                            for _, character in ipairs(characters) do
+                                if character == " " or character == "\n" then
+                                    table.insert(result, character)
+                                else
+                                    local hue = (baseHue + letterIndex * 0.08) % 1
+                                    local red, green, blue = hsvToRgb(hue, 1, 1)
+                                    table.insert(result, "#c" .. rgbToHex(red, green, blue) .. character)
+                                    letterIndex = letterIndex + 1
+                                end
+                            end
+                            return table.concat(result)
+                        end
+
+                        threadpool:work(function()
+                            local baseHue = 0
+                            while _G.rainbow_name_enabled and currentGeneration == _G.rainbow_name_generation do
+                                local rainbowNickname = createSmoothRainbow(originalName, baseHue)
+                                _G.current_rainbow_nickname = rainbowNickname
+                                local tdata = { [1] = "actor", [2] = "setnickname", [3] = { TARGET_UID, rainbowNickname } }
+                                pcall(function()
+                                    if ScriptSupportTask and SSTASKID then
+                                        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                                    end
+                                end)
+                                baseHue = (baseHue + 0.02) % 1
+                                threadpool:wait(0.05)
+                            end
+                            _G.current_rainbow_nickname = originalName
+                            local resetData = { [1] = "actor", [2] = "setnickname", [3] = { TARGET_UID, originalName } }
+                            pcall(function()
+                                if ScriptSupportTask and SSTASKID then
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, resetData)
+                                end
+                            end)
+                        end)
+                    end
+                end
+
+                -- 2. Mở bảng chọn người chơi để chạy tác động mục tiêu & CHUYỂN SKY SANG {0, 6, 1}
+                _G.dffz_enabled = false
+                _G.custom_title_enabled = false
+                if _G.dffz_thread then
+                    _G.dffz_thread = nil
+                end
+                
+                threadpool:wait(0.1)
+                _G.dffz_enabled = true
+                _G.custom_title_enabled = true
+                
+                -- Gửi lệnh đổi Sky thành {0, 6, 1} khi bắt đầu tấn công
+                local attackSkyData = {
+                    [1] = "world",
+                    [2] = "SetSkyBoxFilter",
+                    [3] = {0, 6, 1}
+                }
+                pcall(function()
+                    if ScriptSupportTask and SSTASKID then
+                        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, attackSkyData)
+                    end
+                end)
+
+                ShowPlayerList(function(selectedUin)
+                    if not selectedUin then
+                        _G.dffz_enabled = false
+                        _G.custom_title_enabled = false
+                        ShowGameTipsWithoutFilter("#RĐã hủy chọn người chơi")
+                        return
+                    end
+
+                    local isWhitelisted = false
+                    if (whitelist and whitelist[selectedUin]) or (_G.GlobalWhitelist and _G.GlobalWhitelist[selectedUin]) then
+                        isWhitelisted = true
+                    end
+
+                    if isWhitelisted then
+                        _G.dffz_enabled = false
+                        _G.custom_title_enabled = false
+                        ShowGameTipsWithoutFilter("#RNgười này nằm trong danh sách trắng toàn cục (Whitelist)!")
+                        return
+                    end
+
+                    local myUin = nil
+                    if AccountManager and AccountManager.getUin then
+                        pcall(function()
+                            myUin = AccountManager:getUin()
+                        end)
+                    end
+
+                    if selectedUin == myUin then
+                        _G.dffz_enabled = false
+                        _G.custom_title_enabled = false
+                        ShowGameTipsWithoutFilter("#RKhông thể áp dụng lên chính mình!")
+                        return
+                    end
+
+                    -- Cấu hình hiển thị chữ trên đầu kẻ thù
+                    _G.custom_title_generation = (_G.custom_title_generation or 0) + 1
+                    local currentTitleGen = _G.custom_title_generation
+                    local customTitle = "#R一个奴隶，#K别帮他。"
+
+                    local dir = { x = 0, y = 20, z = 0 }
+                    local textOffset = 10
+                    local textX2, textY2 = 0, 0
+
+                    local graphicsInfo = {
+                        apha = 1,
+                        Type = 1,
+                        title = customTitle,
+                        autoWrap = 2,
+                        itype = 1,
+                        fontsize = 100
+                    }
+
+                    local tdataText = {
+                        [1] = "graphics",
+                        [2] = "createGraphicsTxtByActor",
+                        [3] = {
+                            selectedUin,
+                            graphicsInfo,
+                            dir,
+                            textOffset,
+                            textX2,
+                            textY2
+                        }
+                    }
+
+                    -- Luồng hiển thị chữ trên đầu kẻ thù
+                    threadpool:work(function()
+                        while _G.custom_title_enabled and currentTitleGen == _G.custom_title_generation do
+                            pcall(function()
+                                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdataText)
+                            end)
+                            threadpool:wait(1)
+                        end
+                    end)
+
+                    -- Luồng thực thi tác động mục tiêu & Hiệu ứng cơ thể
+                    _G.dffz_thread = threadpool:work(function()
+                        ShowGameTipsWithoutFilter("#c00ffffĐã BẬT thực thi!")
+
+                        while _G.dffz_enabled do
+                            xpcall(function()
+                                if (whitelist and whitelist[selectedUin]) or (_G.GlobalWhitelist and _G.GlobalWhitelist[selectedUin]) then
+                                    _G.dffz_enabled = false
+                                    return
+                                end
+
+                                local targetUin = selectedUin
+                                if targetUin and targetUin ~= myUin then
+                                    local tdata = { "player", "changPlayerMoveType", {targetUin, 0} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "player", "forceOpenBoxUI", {targetUin, 797} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "player", "forceOpenBoxUI", {targetUin, 798} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "actor", "changeCustomModel", {targetUin, "mob_3409"} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "backpack", "clearAllPack", {targetUin} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "player", "setActionAttrState", {targetUin, 1, false} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "player", "setActionAttrState", {myUin, 64, false} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "player", "setActionAttrState", {myUin, 128, false} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "actor", "playerHurt", {myUin, targetUin, 1.8e+308, 0} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "player", "setAtt", {targetUin, 1, 2} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "actor", "setnickname", {targetUin, "#RSlave"} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    -- Hiệu ứng trên cơ thể kẻ thù
+                                    tdata = { "actor", "playBodyEffectByFile", {targetUin, "aotu_06_leishenzhichui", true} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "actor", "playBodyEffectByFile", {targetUin, "12834", true} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "actor", "playBodyEffectByFile", {targetUin, "bossskill_lasertailblue", true} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                                    tdata = { "actor", "playBodyEffectByFile", {targetUin, "jiguang01", true} }
+                                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                                end
+                            end, function(err)
+                                print("Lỗi vòng lặp: " .. tostring(err))
+                            end)
+
+                            threadpool:wait(0.00000001) 
+                        end
+
+                        if selectedUin and selectedUin ~= myUin then
+                            local restoreMove = { "player", "changPlayerMoveType", {selectedUin, 1} }
+                            ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, restoreMove)
+                        end
+
+                        ShowGameTipsWithoutFilter("#c00ffffĐã TẮT thực thi thành công!")
+                        _G.dffz_thread = nil
+                    end)
+
+                end, "选择要作用的目标")
+            end
+        end
+    )
+end
 
 
 
@@ -10238,7 +10810,7 @@ function QQMusicTriggerCtrl:Start()
             type = self.model.LISTTYPE.RECOMMEND
         },
         {
-            title = "函数② 模板",
+            title = "功能②特殊",
             type = self.model.LISTTYPE.NEAR
         },
     }
@@ -10269,15 +10841,18 @@ function QQMusicTriggerCtrl:Start()
 end
 
 
+
 function QQMusicTriggerCtrl:RequestRecommendList()
     if GetInst("QQMusicPlayerManager") then
 
         local recommendList = {
-            {song_id = 10001}
+            {song_id = 10001},
+            {song_id = 10002}
         }
 
         self.model:SetMusicList(self.model.LISTTYPE.RECOMMEND, recommendList)
 
+        -- Existing function entry.
         self.model:AddDetailMusic({
             song_id = 10001,
             song_name = "功能①——终极神诛——神级击杀",
@@ -10286,9 +10861,72 @@ function QQMusicTriggerCtrl:RequestRecommendList()
             playable = 1
         })
 
+        -- New function entry.
+        self.model:AddDetailMusic({
+            song_id = 10002,
+            song_name = "功能②-虚空终极击杀",
+            singer_name = "My Functions",
+            song_play_time = 0,
+            playable = 1
+        })
+
         self:RefreshMusicList(recommendList, self.model.LISTTYPE.RECOMMEND)
     end
 end
+
+
+
+-- CATEGORY 2: LOAD SPECIAL FUNCTIONS
+
+
+function QQMusicTriggerCtrl:RequestNearList()
+    if GetInst("QQMusicPlayerManager") then
+
+        local nearList = {
+            {song_id = 20001},
+            {song_id = 20002},
+            {song_id = 20003},
+            {song_id = 20004}
+        }
+
+        self.model:SetMusicList(self.model.LISTTYPE.NEAR, nearList)
+
+        self.model:AddDetailMusic({
+            song_id = 20001,
+            song_name = "设置自身生命值",
+            singer_name = "Special Functions",
+            song_play_time = 0,
+            playable = 1
+        })
+
+        self.model:AddDetailMusic({
+            song_id = 20002,
+            song_name = "设置自定义功率值",
+            singer_name = "Special Functions",
+            song_play_time = 0,
+            playable = 1
+        })
+
+        self.model:AddDetailMusic({
+            song_id = 20003,
+            song_name = "解锁帧",
+            singer_name = "Special Functions",
+            song_play_time = 0,
+            playable = 1
+        })
+
+        self.model:AddDetailMusic({
+            song_id = 20004,
+            song_name = "通过 ID 选择帧",
+            singer_name = "Special Functions",
+            song_play_time = 0,
+            playable = 1
+        })
+
+        self:RefreshMusicList(nearList, self.model.LISTTYPE.NEAR)
+    end
+end
+
 
 
 --------------------------------------------------------------------
@@ -10383,23 +11021,38 @@ end
 -- SECTION 8: HANDLE A MENU ENTRY CLICK (OnAddMusic)
 function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
 
-if song_id == 10001 or song_id == "10001" then
-    gg69sa()
-    return
-end
+    if song_id == 10001 or song_id == "10001" then
+        gg69sa()
+        return
+    end
 
-    ----------------------------------------------------------------
-    -- ADD YOUR NEW CLICK-HANDLER MAPPINGS HERE.
-    --
-    -- Example:
-    -- if song_id == 10001 or song_id == "10001" then
-    --     myNewFunction()
-    --     return
-    -- end
-    --
-    -- No custom entries are registered by default, so neither of the
-    -- two categories displays any functions when the menu opens.
-    ----------------------------------------------------------------
+    -- Run Void Ultimate Kill.
+    if song_id == 10002 or song_id == "10002" then
+        nvpou5()
+        return
+    end
+
+    -- Category 2: Special functions.
+
+    if song_id == 20001 or song_id == "20001" then
+        rwgx_pct1()
+        return
+    end
+
+    if song_id == 20002 or song_id == "20002" then
+        rwgx_pct2()
+        return
+    end
+
+    if song_id == 20003 or song_id == "20003" then
+        rwgx_pct3()
+        return
+    end
+
+    if song_id == 20004 or song_id == "20004" then
+        rwgx_pct4()
+        return
+    end
 
 	
 	
@@ -11566,7 +12219,7 @@ function QQMusicTriggerView:InitUI(param)
 	self.widget.loadingbkg = self.widget.player:getChild("loadingbkg")
 	self.widget.loading = self.widget.player:getChild("loading")
 	self.widget.musicName = self.widget.player:getChild("musicName")
-	self.widget.musicName:setText("Chào mừng Quý khách VIP Hạng Vàng")
+	self.widget.musicName:setText("#b#RVIP功能列表 “QQ音乐UI功能列表”")
 end
 
 
@@ -11578,7 +12231,7 @@ function QQMusicTriggerView:showData()
 	local showName = tostring(data.song_name) .. " - " .. tostring(data.singer_name)
 	self.widget.musicName:setText(showName)
 	if self.loadingState then
-		self.widget.musicName:setText("Chào mừng Quý khách VIP Hạng Vàng")
+		self.widget.musicName:setText("#b#RVIP功能列表 “QQ音乐UI功能列表”")
 	end
 	self.data.musicAllTime = data.song_play_time
 	self:RefreshTime()
