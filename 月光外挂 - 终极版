@@ -10885,8 +10885,8 @@ function QQMusicTriggerCtrl:RequestRecommendList()
     -- ORIGINAL FUNCTION 1
     self.model:AddDetailMusic({
         song_id = 10001,
-        song_name = "功能①——终极神诛——神级击杀",
-        singer_name = "My Functions",
+        song_name = "功能①神级击杀",
+        singer_name = "无效——神祇",
         song_play_time = 0,
         playable = 1
     })
@@ -10895,7 +10895,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
     self.model:AddDetailMusic({
         song_id = 10002,
         song_name = "功能②-虚空终极击杀",
-        singer_name = "My Functions",
+        singer_name = "无效——神祇",
         song_play_time = 0,
         playable = 1
     })
@@ -10904,7 +10904,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
     self.model:AddDetailMusic({
         song_id = 19999,
         song_name = "功能②特殊",
-        singer_name = " ",
+        singer_name = "Category",
         song_play_time = 0,
         playable = 0
     })
@@ -10913,7 +10913,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
     self.model:AddDetailMusic({
         song_id = 20001,
         song_name = "设置自身生命值",
-        singer_name = "My Functions",
+        singer_name = "无效——神祇",
         song_play_time = 0,
         playable = 1
     })
@@ -10922,7 +10922,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
     self.model:AddDetailMusic({
         song_id = 20002,
         song_name = "设置自定义功率值",
-        singer_name = "My Functions",
+        singer_name = "无效——神祇",
         song_play_time = 0,
         playable = 1
     })
@@ -10931,7 +10931,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
     self.model:AddDetailMusic({
         song_id = 20003,
         song_name = "解锁帧",
-        singer_name = "My Functions",
+        singer_name = "无效——神祇",
         song_play_time = 0,
         playable = 1
     })
@@ -10940,7 +10940,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
     self.model:AddDetailMusic({
         song_id = 20004,
         song_name = "通过 ID 选择帧",
-        singer_name = "My Functions",
+        singer_name = "无效——神祇",
         song_play_time = 0,
         playable = 1
     })
