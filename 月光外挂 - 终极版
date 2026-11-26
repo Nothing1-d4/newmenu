@@ -5958,6 +5958,361 @@ function tdwg()
 end
 
 
+
+function block_pct1()
+    local currentDeviceID = ClientMgr:getDeviceID()
+    
+    -- Kiểm tra quyền hạn thiết bị
+    if not DEVICE_AUTH_DISABLED and not author3[currentDeviceID] then
+        ShowGameTipsWithoutFilter("#RNút này chỉ dành cho người mua sử dụng", 3)
+        return
+    end
+
+    -- Đóng ngay bảng menu giao diện khi ấn vào nút chức năng
+    pcall(function()
+        GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen") -- Đổi tên UI nếu cần khớp với mã game của bạn
+    end)
+
+    -- BẢNG 1: Nhập kích thước vùng
+    ShowTextInputSafe(function(sizeText)
+        if not sizeText or sizeText == "" then
+            ShowGameTipsWithoutFilter("Vui lòng nhập kích thước hợp lệ")
+            return
+        end
+
+        local platform_size = tonumber(sizeText)
+        if not platform_size or platform_size <= 0 then
+            ShowGameTipsWithoutFilter("Kích thước phải là một con số lớn hơn 0")
+            return
+        end
+
+        -- BẢNG 2: Nhập ID khối
+        ShowTextInputSafe(function(idText)
+            if not idText or idText == "" then
+                ShowGameTipsWithoutFilter("Vui lòng nhập ID khối hợp lệ")
+                return
+            end
+
+            local blockId = tonumber(idText)
+            if not blockId then
+                ShowGameTipsWithoutFilter("ID khối phải là một con số")
+                return
+            end
+
+            -- BẢNG 3: Hộp thoại Yes/No xác nhận đồng ý hoặc hủy
+            GetInst("MessageBoxInterface"):dualBtnBox(
+                "Xác nhận tạo sàn với kích thước " .. platform_size .. "x" .. platform_size .. " (ID: " .. blockId .. ")?",
+                "Hủy",
+                "Đồng ý",
+                function(userData, btnType)
+                    -- btnType == 0 là nút trái (Hủy), btnType == 1 là nút phải (Đồng ý)
+                    if btnType == 1 then
+                        local x, y, z = CurMainPlayer:getPosition(0, 0, 0)
+                        local base_x, base_y, base_z = math.floor(x / 100), math.floor(y / 100), math.floor(z / 100)
+
+                        local half_size = math.floor(platform_size / 2)
+                        local floor_y = base_y - 1 
+
+                        -- Tạo vùng nền theo kích thước người dùng nhập
+                        for dx = -half_size, half_size - 1 do
+                            for dz = -half_size, half_size - 1 do
+                                local current_x = base_x + dx
+                                local current_z = base_z + dz
+                                local tdata = {
+                                    [1] = "block",
+                                    [2] = "placeBlock",
+                                    [3] = { blockId, current_x, floor_y, current_z, 0, -1 }
+                                }
+                                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                            end
+                        end
+
+                        ShowGameTipsWithoutFilter("#c00ff00Đã tạo sàn " .. platform_size .. "x" .. platform_size .. " tức thì!")
+                    else
+                        ShowGameTipsWithoutFilter("#cFF0000Đã hủy thao tác!")
+                    end
+                end
+            )
+        end)
+    end)
+end
+
+
+
+
+
+
+
+function block_pct2()
+    local currentDeviceID = ClientMgr:getDeviceID()
+    
+    -- Kiểm tra quyền hạn thiết bị
+    if not DEVICE_AUTH_DISABLED and not author3[currentDeviceID] then
+        ShowGameTipsWithoutFilter("#RNút này chỉ dành cho người mua sử dụng", 3)
+        return
+    end
+
+    -- Đóng ngay bảng menu giao diện khi ấn vào nút chức năng
+    pcall(function()
+        GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+    end)
+
+    -- Hiển thị bảng nhập size
+    ShowTextInputSafe(function(sizeText)
+        if not sizeText or sizeText == "" then
+            ShowGameTipsWithoutFilter("Vui lòng nhập giá trị size hợp lệ")
+            return
+        end
+
+        local size = tonumber(sizeText)
+        if not size or size <= 0 then
+            ShowGameTipsWithoutFilter("Size phải là một con số lớn hơn 0")
+            return
+        end
+
+        -- Hiển thị bảng Yes/No xác nhận
+        GetInst("MessageBoxInterface"):dualBtnBox(
+            "Xác nhận tạo vùng boom với size " .. size .. " x " .. size .. "?",
+            "Hủy",
+            "Đồng ý",
+            function(userData, btnType)
+                if btnType == 1 then
+                    local x, y, z = CurMainPlayer:getPosition(0, 0, 0)
+                    local base_x, base_y, base_z = x / 100, y / 100, z / 100
+
+                    local start_x = base_x + 5
+                    local top_y = base_y + size
+
+                    local num_decor = 8
+                    local gap = 0
+                    if num_decor > 1 then
+                        gap = (size - 1) / (num_decor - 1)
+                    end
+
+                    -- 1. Tạo khối lập phương bự (ID cố định: 835)
+                    for dx = 0, size - 1 do
+                        local current_x = start_x + dx
+                        for dy = 0, size - 1 do
+                            local current_y = base_y + dy
+                            for dz = 0, size - 1 do
+                                local current_z = base_z - dz
+                                local tdata = {
+                                    [1] = "block",
+                                    [2] = "placeBlock",
+                                    [3] = { 835, current_x, current_y, current_z, 0, -1 }
+                                }
+                                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                            end
+                        end
+                    end
+
+                    -- 2. Đặt trang trí ĐÚNG ĐỘ CAO VÀ NẰM TRÊN BỀ MẶT NÓC (ID cố định: 6)
+                    for i = 0, num_decor - 1 do
+                        local pos_x = start_x + i * gap
+                        local pos_z = base_z -- Đặt ngay mép ngoài cùng phía trước
+                        local pos_y = top_y  -- Đặt cao hơn so với đỉnh (nằm ngay trên bề mặt)
+                        local tdata = {
+                            [1] = "block",
+                            [2] = "placeBlock",
+                            [3] = { 6, pos_x, pos_y, pos_z, 0, -1 }
+                        }
+                        ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                    end
+
+                    ShowGameTipsWithoutFilter("#c00ff00Đã tạo vùng bom size " .. size .. " thành công!")
+                else
+                    ShowGameTipsWithoutFilter("#cFF0000Đã hủy thao tác!")
+                end
+            end
+        )
+    end)
+end
+
+
+
+function sorry_pct1()
+    local myUin = AccountManager:getUin()
+    
+    -- ===== Sử dụng danh sách trắng toàn cục theo ý bạn =====
+    if whitelist == nil then
+        whitelist = {}
+    end
+
+    local size = ClientCurGame:requireArrayOfPlayers(-1, -1)
+    for i = 1, size do
+        local targetPlayer = ClientCurGame:getIthPlayerInArray(i - 1)
+        if targetPlayer then
+            local targetUin = targetPlayer:getUin()
+            -- Kiểm tra nếu targetUin khác bản thân VÀ không nằm trong whitelist
+            if targetUin ~= myUin and not whitelist[targetUin] then
+                local tdata = {}
+                tdata[1] = "player";
+                tdata[2] = "changPlayerMoveType";
+                tdata[3] = {targetUin, 0}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "world";
+                tdata[2] = "SetTimeVanishingSpeed";
+                tdata[3] = {500}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "player";
+                tdata[2] = "changeViewMode";
+                tdata[3] = {targetUin, 9, true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)  
+                
+                tdata = {}
+                tdata[1] = "player";
+                tdata[2] = "forceOpenBoxUI";
+                tdata[3] = {targetUin, 797}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                tdata = {}
+                tdata[1] = "player";
+                tdata[2] = "forceOpenBoxUI";
+                tdata[3] = {targetUin, 798}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+
+                tdata = {}
+                tdata[1] = "player";
+                tdata[2] = "forceOpenBoxUI";
+                tdata[3] = {targetUin, 798}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "changeCustomModel";
+                tdata[3] = {targetUin, [=[role_11]=]}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "chat";
+                tdata[2] = "sendChat";
+                tdata[3] = {"#c99FFFF英雄挺身而出，为正义而战。\n#c99FFFF英雄挺身而出，为正义而战。\n#c99FFFF英雄挺身而出，为正义而战。\n#c99FFFF英雄挺身而出，为正义而战。\n#c99FFFF英雄挺身而出，为正义而战。\n#c99FFFF英雄挺身而出，为正义而战。\n#c99FFFF英雄挺身而出，为正义而战。\n#c99FFFF英雄挺身而出，为正义而战。\n#c99FFFF英雄挺身而出，为正义而战。\n", 1, 0}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "player";
+                tdata[2] = "notifyGameInfo2Self";
+                tdata[3] = {targetUin, "#c000033为#c000066什#c000088么#c0000AA要#c0000CC身#c0000FF处#c0044FF神#c0088FF圣#c00BBFF之#c33DDFF地#c66EEFF？"}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "setnickname";
+                tdata[3] = {targetUin, "#c99FFCC对不起"}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "backpack";
+                tdata[2] = "clearAllPack";
+                tdata[3] = {targetUin}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "player";
+                tdata[2] = "setActionAttrState";
+                tdata[3] = {targetUin, 1, false}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                if myUin then
+                    tdata = {}
+                    tdata[1] = "player";
+                    tdata[2] = "setActionAttrState";
+                    tdata[3] = {myUin, 64, false}
+                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                    
+                    tdata = {}
+                    tdata[1] = "player";
+                    tdata[2] = "setActionAttrState";
+                    tdata[3] = {myUin, 128, false}
+                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                end
+                
+                -- ===== ĐÃ THAY THẾ LỆNH SKY MỚI Ở ĐÂY =====
+                tdata = {}
+                tdata[1] = "world";
+                tdata[2] = "SetSkyBoxTemplate";
+                tdata[3] = {5}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "world";
+                tdata[2] = "SetSkyBoxFilter";
+                tdata[3] = {0, 10, 4}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                -- ==========================================
+                
+                if myUin then
+                    tdata = {}
+                    tdata[1] = "actor";
+                    tdata[2] = "playerHurt";
+                    tdata[3] = {myUin, targetUin, 1.8e+308, 0}
+                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                end
+                
+                tdata = {}
+                tdata[1] = "player";
+                tdata[2] = "setAtt";
+                tdata[3] = {targetUin, 1, 2}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "playBodyEffectByFile";
+                tdata[3] = {myUin, "yanhua", true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "playBodyEffectByFile";
+                tdata[3] = {myUin, "12834", true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "playBodyEffectByFile";
+                tdata[3] = {myUin, "bossskill_lasertailblue", true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "playBodyEffectByFile";
+                tdata[3] = {myUin, "ice_bingshi_boss", true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "playBodyEffectByFile";
+                tdata[3] = {myUin, "mob_3514_white", true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "playBodyEffectByFile";
+                tdata[3] = {myUin, "nengliang_xiqu", true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "playBodyEffectByFile";
+                tdata[3] = {myUin, "nengliang_baozha", true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+                
+                tdata = {}
+                tdata[1] = "actor";
+                tdata[2] = "playBodyEffectByFile";
+                tdata[3] = {targetUin, "jiguang01", true}
+                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdata)
+            end
+        end
+    end
+end
+
+
+
 function qseb()
     local changeBtn = getglobal("AccChangeColorBtn")
     if changeBtn then changeBtn:Show() end
@@ -10866,17 +11221,23 @@ end
 -- ==================== SECTION 2: CATEGORY 1 ENTRIES ====================
 
 
+
+
 function QQMusicTriggerCtrl:RequestRecommendList()
 
     local recommendList = {
         {song_id = 19998},
         {song_id = 10001},
         {song_id = 10002},
+        {song_id = 10003},
         {song_id = 19999},
         {song_id = 20001},
         {song_id = 20002},
         {song_id = 20003},
-        {song_id = 20004}
+        {song_id = 20004},
+        {song_id = 19997},
+        {song_id = 30001},
+        {song_id = 30002}
     }
 
     self.model:SetMusicList(
@@ -10906,6 +11267,15 @@ function QQMusicTriggerCtrl:RequestRecommendList()
     self.model:AddDetailMusic({
         song_id = 10002,
         song_name = "功能②-虚空终极击杀",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
+    -- NEW CATEGORY 1 FUNCTION
+    self.model:AddDetailMusic({
+        song_id = 10003,
+        song_name = "功能③ 对不起",
         singer_name = "无效——神祇",
         song_play_time = 0,
         playable = 1
@@ -10956,6 +11326,33 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
+    -- CATEGORY 3: BLOCKS (INACTIVE SEPARATOR)
+    self.model:AddDetailMusic({
+        song_id = 19997,
+        song_name = "積木類別（類別③）",
+        singer_name = "Category",
+        song_play_time = 0,
+        playable = 0
+    })
+
+    -- BLOCK FUNCTION 1
+    self.model:AddDetailMusic({
+        song_id = 30001,
+        song_name = "設定區塊",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
+    -- BLOCK FUNCTION 2
+    self.model:AddDetailMusic({
+        song_id = 30002,
+        song_name = "設置炸彈",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
     -- Refresh the visible RECOMMEND list.
     self.view:RefreshMusicList(
         recommendList,
@@ -10982,6 +11379,8 @@ end
 -- ==================== SECTION 4: MENU CLICK HANDLER ====================
 
 
+
+
 function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
 
     -- TOP INACTIVE SEPARATOR
@@ -10998,6 +11397,12 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
     -- ORIGINAL FUNCTION 2
     if song_id == 10002 or song_id == "10002" then
         nvpou5()
+        return
+    end
+
+    -- NEW CATEGORY 1 FUNCTION
+    if song_id == 10003 or song_id == "10003" then
+        sorry_pct1()
         return
     end
 
@@ -11030,6 +11435,23 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
         return
     end
 
+    -- CATEGORY 3: BLOCKS (INACTIVE SEPARATOR)
+    if song_id == 19997 or song_id == "19997" then
+        return
+    end
+
+    -- BLOCK FUNCTION 1
+    if song_id == 30001 or song_id == "30001" then
+        block_pct1()
+        return
+    end
+
+    -- BLOCK FUNCTION 2
+    if song_id == 30002 or song_id == "30002" then
+        block_pct2()
+        return
+    end
+
     -- NORMAL MUSIC FALLBACK
     self:GetMusicDetailInfo(song_id, function(item)
         if not item then
@@ -11043,6 +11465,7 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
         end)
     end)
 end
+
 
 
 
@@ -11262,7 +11685,7 @@ function QQMusicTriggerView:RefreshMusicListItem(item, index, data, showMark)
     if rank then
         rank:setColor({r = 255, g = 0, b = 0})
         rank:setVisible(not showMark)
-        rank:setText("VIP")
+        rank:setText("神力")
     end
 
     if mark then
