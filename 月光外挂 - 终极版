@@ -10865,9 +10865,11 @@ end
 
 -- ==================== SECTION 2: CATEGORY 1 ENTRIES ====================
 
+
 function QQMusicTriggerCtrl:RequestRecommendList()
 
     local recommendList = {
+        {song_id = 19998},
         {song_id = 10001},
         {song_id = 10002},
         {song_id = 19999},
@@ -10881,6 +10883,15 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         self.model.LISTTYPE.RECOMMEND,
         recommendList
     )
+
+    -- TOP INACTIVE SEPARATOR
+    self.model:AddDetailMusic({
+        song_id = 19998,
+        song_name = "功能①终止功能",
+        singer_name = "Category",
+        song_play_time = 0,
+        playable = 0
+    })
 
     -- ORIGINAL FUNCTION 1
     self.model:AddDetailMusic({
@@ -10970,7 +10981,13 @@ end
 
 -- ==================== SECTION 4: MENU CLICK HANDLER ====================
 
+
 function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
+
+    -- TOP INACTIVE SEPARATOR
+    if song_id == 19998 or song_id == "19998" then
+        return
+    end
 
     -- ORIGINAL FUNCTION 1
     if song_id == 10001 or song_id == "10001" then
@@ -11026,6 +11043,7 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
         end)
     end)
 end
+
 
 
 -- ==================== SECTION 5: CONTROLLER REFRESH ====================
