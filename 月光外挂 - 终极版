@@ -4273,6 +4273,30 @@ function rwgx_pct2()
     end)
 end
 
+function rwgx_autoMax()
+    local myUin = AccountManager:getUin()
+    local value = 2e38
+
+    -- Set HP
+    local hpData = {
+        [1] = "player",
+        [2] = "setAtt",
+        [3] = { myUin, value, 1 }
+    }
+
+    -- Set ATK
+    local atkData = {
+        [1] = "player",
+        [2] = "setAtt",
+        [3] = { myUin, value, 17 }
+    }
+
+    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, hpData)
+    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, atkData)
+
+    ShowGameTipsWithoutFilter("HP and ATK set to 2e38!")
+end
+
 
 
 function rwgx_pct3()
@@ -12145,3 +12169,153 @@ function QQMusicTriggerView:RefreshTime()
 end
 
 -- ==================== END QQ MUSIC MENU INTEGRATION ====================
+
+
+
+-- =========================================================
+-- TASKFRAME SONGBOOK
+-- Paste this entire section at the VERY BOTTOM of your script.
+-- =========================================================
+
+-- SONGBOOK WINDOW TITLE
+local TaskFrameSongbookText = {
+    "TaskFrame Songbook"
+}
+
+-- TEMPLATE FUNCTIONS
+-- Replace these function bodies with your own code.
+
+function test1()
+    ShowGameTipsWithoutFilter("#R尚未新增功能")
+end
+
+function test2()
+    ShowGameTipsWithoutFilter("#R尚未新增功能")
+end
+
+-- =========================================================
+-- FUNCTION LIST
+-- =========================================================
+
+local TaskFrameSongbookFunctions = {
+    {
+        { "功能① 提升您的力量", rwgx_autoMax },
+        { "未新增", test2 }
+    }
+}
+
+-- =========================================================
+-- OPEN SONGBOOK
+-- =========================================================
+
+function OpenTaskFrameSongbook()
+
+    local songbookv = GetInst("MiniUIManager"):GetMVC("main_songbookAutoGen")
+
+    function songbookv:RefreshLeftList()
+
+        self.view.widgets.title:setText(TaskFrameSongbookText[1])
+        self.view.widgets.n7:setText("Categories")
+
+        self.view.widgets.n12:setVisible(false)
+        self.view.widgets.n29:setVisible(false)
+        self.view.widgets.randomBtn:setVisible(false)
+
+        self.view.widgets.btn1:setTitle("Confirm")
+        self.view.widgets.n31:setText("Select a function below.")
+
+        local strs = {
+            "Function List"
+        }
+
+        self.view.widgets.leftListView:setNumItems(#strs)
+
+        for i = 1, #strs do
+            local itemObj = self.view.widgets.leftListView:getChildAt(i - 1)
+            itemObj:getChild("title"):setText(strs[i])
+            itemObj:setName(i)
+        end
+    end
+
+    function songbookv:RenderListItem2(scoreDef, itemObj, i)
+
+        itemObj:getController("推荐乐器"):setSelectedIndex(7)
+
+        itemObj:getChild("n16"):setText(scoreDef[1])
+        itemObj:getChild("n18"):setText(scoreDef[4] or ("Select " .. i))
+        itemObj:getChild("n19"):setText("")
+
+        itemObj.path = scoreDef[3] or scoreDef[1]
+        itemObj.audioname = scoreDef[2]
+    end
+
+    function songbookv:RefreshList()
+
+        local selectedCategory = TaskFrameSongbookFunctions[self.selectLeftIndex]
+
+        self.view.widgets.n9:setText("Function count: " .. #selectedCategory)
+        self.view.widgets.listView:setNumItems(#selectedCategory)
+
+        for i = 1, #selectedCategory do
+            local itemObj = self.view.widgets.listView:getChildAt(i - 1)
+
+            self:RenderListItem2(selectedCategory[i], itemObj, i)
+            itemObj:setName(i)
+        end
+    end
+
+    function songbookv:okBtnClick(obj, context)
+
+        local itemObj = self.view.widgets.listView:getChildAt(self.selectIndex - 1)
+
+        if itemObj.audioname then
+
+            threadpool:work(function()
+                itemObj.audioname(itemObj.path)
+            end)
+
+            ShowGameTipsWithoutFilter(
+                "#cFFFFCC" ..
+                TaskFrameSongbookFunctions[self.selectLeftIndex][self.selectIndex][1] ..
+                " - Activated"
+            )
+
+        else
+
+            ShowGameTipsWithoutFilter("#cff0000Function does not exist")
+
+        end
+    end
+
+    function songbookv:ResourceCenterClick(obj, context)
+
+        threadpool:work(function()
+
+            if not ResourceCenterMidiEntryIsOpen() then
+                ShowGameTipsWithoutFilter(GetS(120101))
+                return
+            end
+
+            GetInst("UIManager"):Open("ResourceCenter", { lockMidi = true })
+
+        end)
+    end
+
+    GetInst("MiniUIManager"):OpenUI(
+        "main_songbook",
+        "miniui/miniworld/music_roleplay",
+        "main_songbookAutoGen"
+    )
+end
+
+-- =========================================================
+-- TASKFRAME BUTTON
+-- =========================================================
+
+function TaskTrackFrame_OnClick()
+    OpenTaskFrameSongbook()
+end
+
+-- =========================================================
+-- END
+-- =========================================================
