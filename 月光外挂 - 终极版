@@ -8208,6 +8208,483 @@ function qswj()
 end
 
 
+
+
+
+
+
+function name_pct1()
+
+    local currentDeviceID = ClientMgr:getDeviceID()
+
+    -- Check device authorization
+    if not DEVICE_AUTH_DISABLED and not author3[currentDeviceID] then
+        ShowGameTipsWithoutFilter("#R此按钮仅限购买者使用", 3)
+        return
+    end
+
+    -- Close the QQ Music menu
+    pcall(function()
+        GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+    end)
+
+    -- Get your own UIN
+    local myUin = nil
+
+    pcall(function()
+        if AccountManager and AccountManager.getUin then
+            myUin = AccountManager:getUin()
+        end
+    end)
+
+    if not myUin then
+        ShowGameTipsWithoutFilter("无法获取你的 UIN。")
+        return
+    end
+
+    -- Set your own nickname
+    local tdata = {
+        [1] = "actor",
+        [2] = "setnickname",
+        [3] = {
+            myUin,
+            "#b#W无效#K-神祇"
+        }
+    }
+
+    local success = pcall(function()
+        if ScriptSupportTask and SSTASKID then
+            ScriptSupportTask:reportTaskToHost(
+                SSTASKID.HOST_BordCast,
+                tdata
+            )
+        else
+            error("ScriptSupportTask unavailable")
+        end
+    end)
+
+    if success then
+        ShowGameTipsWithoutFilter("已发送名称更改请求！")
+    else
+        ShowGameTipsWithoutFilter("名称更改请求失败。")
+    end
+
+end
+
+
+
+
+function name_pcto1()
+    local currentDeviceID = ClientMgr:getDeviceID()
+    
+    -- Kiểm tra thiết bị có trong danh sách trắng hay không
+    if not DEVICE_AUTH_DISABLED and not author3[currentDeviceID] then
+        ShowGameTipsWithoutFilter("#R此按钮仅限购买者使用", 3)
+        return
+    end
+
+    ShowGameTipsWithoutFilter("#RĐã kích hoạt thành công")
+    GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+
+    -- Hộp thoại lựa chọn Bật / Tắt (Bên trái: Tắt, Bên phải: Bật)
+    GetInst("MessageBoxInterface"):dualBtnBox(
+        "#cCCFF99Bật 1 dãi cầu vồng màu sắc\nDừng lại ở bên trái\nBắt đầu từ bên phải",
+        "关闭",
+        nil,
+        function(userData, btnType)
+            if btnType == 0 then
+                -- Nút TẮT (Bên trái) -> Dừng vòng lặp và XÓA LUÔN hình ảnh/chữ trên đầu
+                _G.rainbow_name_enabled = false
+                
+                local myUin = nil
+                if CurMainPlayer and CurMainPlayer.getUin then
+                    pcall(function() myUin = CurMainPlayer:getUin() end)
+                end
+                if not myUin then myUin = AccountManager:getUin() end
+
+                -- Gói tin xóa ảnh và chữ theo Actor (ID 1 tương ứng với ID lúc tạo ảnh)
+                local removeImage = { [1] = "graphics", [2] = "removeGraphicsImageByActor", [3] = { myUin, 1 } }
+                local removeText  = { [1] = "graphics", [2] = "removeGraphicsTxtByActor", [3] = { myUin } }
+                
+                pcall(function()
+                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, removeImage)
+                    ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, removeText)
+                end)
+
+                ShowGameTipsWithoutFilter("#cFF0000Đã tắt và xóa hiệu ứng trên đầu!")
+                
+            elseif btnType == 1 then
+                -- Nút BẬT (Bên phải) -> Hiển thị bảng nhập chữ bằng ShowTextInputSafe
+                ShowTextInputSafe(function(text)
+                    if not text or text == "" then
+                        ShowGameTipsWithoutFilter("Vui lòng nhập nội dung văn bản hợp lệ")
+                        return
+                    end
+
+                    _G.rainbow_name_generation = (_G.rainbow_name_generation or 0) + 1
+                    local currentGeneration = _G.rainbow_name_generation
+                    _G.rainbow_name_enabled = true
+
+                    -- Lấy UID trực tiếp từ nhân vật hiện tại an toàn
+                    local myUin = nil
+                    if CurMainPlayer and CurMainPlayer.getUin then
+                        pcall(function()
+                            myUin = CurMainPlayer:getUin()
+                        end)
+                    end
+                    
+                    if not myUin then
+                        myUin = AccountManager:getUin()
+                    end
+
+                    -- Nội dung chữ kèm khoảng trắng để chạy màu vòng tròn mượt
+                    local nickname = text .. "          "
+
+                    -- Các hàm xử lý màu (HSV -> RGB -> Hex)
+                    local function splitUtf8(str)
+                        local characters = {}
+                        for character in string.gmatch(str, "[%z\1-\127\194-\244][\128-\191]*") do
+                            table.insert(characters, character)
+                        end
+                        return characters
+                    end
+
+                    local function hsvToRgb(hue, saturation, value)
+                        local sector = math.floor(hue * 6)
+                        local fraction = hue * 6 - sector
+                        local p = value * (1 - saturation)
+                        local q = value * (1 - fraction * saturation)
+                        local t = value * (1 - (1 - fraction) * saturation)
+
+                        sector = sector % 6
+                        local red, green, blue
+
+                        if sector == 0 then red, green, blue = value, t, p
+                        elseif sector == 1 then red, green, blue = q, value, p
+                        elseif sector == 2 then red, green, blue = p, value, t
+                        elseif sector == 3 then red, green, blue = p, q, value
+                        elseif sector == 4 then red, green, blue = t, p, value
+                        else red, green, blue = value, p, q
+                        end
+
+                        return math.floor(red * 255 + 0.5), math.floor(green * 255 + 0.5), math.floor(blue * 255 + 0.5)
+                    end
+
+                    local function rgbToHex(red, green, blue)
+                        return string.format("%02x%02x%02x", red, green, blue)
+                    end
+
+                    local function createSmoothRainbow(str, baseHue)
+                        local characters = splitUtf8(str)
+                        local result = {}
+                        local letterIndex = 0
+
+                        for _, character in ipairs(characters) do
+                            if character == " " then
+                                table.insert(result, character)
+                            else
+                                local hue = (baseHue + letterIndex * 0.08) % 1
+                                local red, green, blue = hsvToRgb(hue, 1, 1)
+                                table.insert(result, "#c" .. rgbToHex(red, green, blue) .. character)
+                                letterIndex = letterIndex + 1
+                            end
+                        end
+                        return table.concat(result)
+                    end
+
+                    -- Cấu hình tọa độ hiển thị
+                    local imageDir = { x = 0, y = 50, z = 0 }
+                    local textDir = { x = 0, y = 30, z = 0 }
+                    local textOffset = 10
+                    local textX2, textY2 = 0, 0
+
+                    local graphicsImageInfo = {
+                        imgid = 10099,
+                        scale = 0.7,
+                        apha = 90,
+                        id = 1,
+                        Type = 'GRAPHICS.GRAPHICS_IMAGE'
+                    }
+
+                    local tdataImage = {
+                        [1] = "graphics",
+                        [2] = "createGraphicsImageByActor",
+                        [3] = {
+                            myUin,
+                            graphicsImageInfo,
+                            imageDir,
+                            1,
+                            0,
+                            150
+                        }
+                    }
+
+                    ShowGameTipsWithoutFilter("#c00ffffĐã bật hiệu ứng chữ cầu vồng!")
+
+                    -- Vòng lặp đổi màu
+                    threadpool:work(function()
+                        local baseHue = 0
+
+                        while _G.rainbow_name_enabled and currentGeneration == _G.rainbow_name_generation do
+                            local graphicsInfo = {
+                                apha = 1,
+                                Type = 1,
+                                title = createSmoothRainbow(nickname, baseHue),
+                                autoWrap = 2,
+                                itype = 1,
+                                fontsize = 100
+                            }
+
+                            local tdataText = {
+                                [1] = "graphics",
+                                [2] = "createGraphicsTxtByActor",
+                                [3] = {
+                                    myUin,
+                                    graphicsInfo,
+                                    textDir,
+                                    textOffset,
+                                    textX2,
+                                    textY2
+                                }
+                            }
+
+                            pcall(function()
+                                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdataImage)
+                                ScriptSupportTask:reportTaskToHost(SSTASKID.HOST_BordCast, tdataText)
+                            end)
+
+                            baseHue = (baseHue + 0.01) % 1
+                            threadpool:wait(0.03)
+                        end
+                    end)
+                end)
+            end
+        end
+    )
+end
+
+
+function name_pcto2()
+    -- 1. Đóng giao diện menu
+    pcall(function()
+        GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+    end)
+
+    -- 2. Hiển thị bảng xác nhận Yes / No
+    GetInst("MessageBoxInterface"):dualBtnBox(
+        "Bạn có muốn tạo hiệu ứng ảnh và danh hiệu cho người chơi không?",
+        "Hủy",
+        "Đồng ý",
+        function(userData, btnType)
+            -- btnType == 1 tương ứng với nút "Đồng ý" (Bên phải)
+            if btnType == 1 then
+                
+                -- 3. Bảng nhập văn bản (Tiêu đề / Danh hiệu)
+                ShowTextInputSafe(function(textInput)
+                    if not textInput or textInput == "" then
+                        ShowGameTipsWithoutFilter("Vui lòng nhập nội dung văn bản hợp lệ.")
+                        return
+                    end
+                    
+                    local customTitle = textInput
+
+                    -- 4. Bảng nhập ID Icon (Hình ảnh)
+                    ShowTextInputSafe(function(iconInput)
+                        if not iconInput or iconInput == "" then
+                            ShowGameTipsWithoutFilter("Vui lòng nhập ID Icon hợp lệ.")
+                            return
+                        end
+
+                        local imgIdNum = tonumber(iconInput)
+                        if not imgIdNum then
+                            ShowGameTipsWithoutFilter("ID Icon phải là một con số.")
+                            return
+                        end
+
+                        -- 5. Bảng chọn người chơi
+                        ShowPlayerList(function(selectedUin)
+                            if not selectedUin then
+                                ShowGameTipsWithoutFilter("#RĐã hủy chọn người chơi")
+                                return
+                            end
+
+                            -- Sử dụng trực tiếp UIN được chọn
+                            local targetUin = selectedUin
+
+                            -- ========================================================
+                            -- TẠO HÌNH ẢNH HIỆU ỨNG (Ở ĐỘ CAO Y = 50)
+                            -- ========================================================
+                            local imageDir = { x = 0, y = 50, z = 0 }
+
+                            local graphicsImageInfo = {
+                                imgid = imgIdNum,
+                                scale = 0.7,
+                                apha = 90,
+                                id = 1,
+                                Type = 'GRAPHICS.GRAPHICS_IMAGE'
+                            }
+
+                            local tdataImage = {
+                                [1] = "graphics",
+                                [2] = "createGraphicsImageByActor",
+                                [3] = {
+                                    targetUin,
+                                    graphicsImageInfo,
+                                    imageDir,
+                                    1,
+                                    0,
+                                    150
+                                }
+                            }
+
+                            -- ========================================================
+                            -- TẠO TÊN HIỂN THỊ (ĐẶT Y = 30)
+                            -- ========================================================
+                            local textDir = { x = 0, y = 30, z = 0 }
+                            local textOffset = 10
+                            local textX2, textY2 = 0, 0
+
+                            local graphicsInfo = {
+                                apha = 1,
+                                Type = 1,
+                                title = customTitle,
+                                autoWrap = 2,
+                                itype = 1,
+                                fontsize = 100
+                            }
+
+                            local tdataText = {
+                                [1] = "graphics",
+                                [2] = "createGraphicsTxtByActor",
+                                [3] = {
+                                    targetUin,
+                                    graphicsInfo,
+                                    textDir,
+                                    textOffset,
+                                    textX2,
+                                    textY2
+                                }
+                            }
+
+                            -- ========================================================
+                            -- GỬI LỆNH LÊN SERVER
+                            -- ========================================================
+                            pcall(function()
+                                -- Gửi tạo ảnh
+                                ScriptSupportTask:reportTaskToHost(
+                                    SSTASKID.HOST_BordCast,
+                                    tdataImage
+                                )
+                                -- Gửi tạo chữ
+                                ScriptSupportTask:reportTaskToHost(
+                                    SSTASKID.HOST_BordCast,
+                                    tdataText
+                                )
+                            end)
+
+                            ShowGameTipsWithoutFilter("#c00ffffĐã tạo hiệu ứng và danh hiệu thành công cho người chơi!")
+                        end, "Chọn người chơi nhận hiệu ứng")
+
+                    end, "Nhập ID Icon hình ảnh")
+
+                end, "Nhập nội dung danh hiệu")
+
+            else
+                ShowGameTipsWithoutFilter("#cFF0000Đã hủy thao tác!")
+            end
+        end
+    )
+end
+
+
+
+
+function name_pct2()
+    local currentDeviceID = ClientMgr:getDeviceID()
+    
+    -- Kiểm tra thiết bị có trong danh sách trắng hay không (nếu có hệ thống auth)
+    if not DEVICE_AUTH_DISABLED and not author3[currentDeviceID] then
+        ShowGameTipsWithoutFilter("#R此按钮仅限购买者使用", 3)
+        return
+    end
+
+    -- Đóng giao diện menu khi ấn
+    pcall(function()
+        GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+    end)
+
+    -- Hiển thị bảng Yes / No (Xác nhận đổi tên bản thân)
+    GetInst("MessageBoxInterface"):dualBtnBox(
+        "Bạn có muốn đổi tên hiển thị của bản thân không?",
+        "Hủy",
+        "Đồng ý",
+        function(userData, btnType)
+            -- btnType == 1 tương ứng với nút "Đồng ý" (Bên phải)
+            if btnType == 1 then
+                -- Bước 1: Mở bảng nhập chữ để bạn gõ tên mới cho bản thân
+                ShowTextInputSafe(function(text)
+                    if not text or text == "" then
+                        ShowGameTipsWithoutFilter("Vui lòng nhập biệt danh hợp lệ.")
+                        return
+                    end
+                    
+                    -- Lấy UIN của chính bản thân người chơi
+                    local myUin = nil
+                    pcall(function()
+                        if AccountManager and AccountManager.getUin then
+                            myUin = AccountManager:getUin()
+                        end
+                    end)
+
+                    if not myUin then
+                        ShowGameTipsWithoutFilter("Không thể xác định UIN của bạn.")
+                        return
+                    end
+
+                    -- Lấy tên cũ của bản thân để hiển thị thông báo
+                    local oldName = "Không rõ tên"
+                    pcall(function()
+                        if ClientCurGame and ClientCurGame.getPlayerByUin then
+                            local playerObj = ClientCurGame:getPlayerByUin(myUin)
+                            if playerObj and playerObj.getNickName then
+                                oldName = playerObj:getNickName()
+                            end
+                        end
+                    end)
+
+                    -- Gói tin đổi tên cho chính bản thân
+                    local tdata = {
+                        [1] = "actor",
+                        [2] = "setnickname",
+                        [3] = {
+                            myUin,  -- UIN của chính bạn
+                            text    -- Tên mới đã nhập từ bước đầu tiên
+                        }
+                    }
+                    
+                    pcall(function()
+                        if ScriptSupportTask and SSTASKID then
+                            ScriptSupportTask:reportTaskToHost(
+                                SSTASKID.HOST_BordCast,
+                                tdata
+                            )
+                        end
+                    end)
+                    
+                    -- Thông báo thành công
+                    ShowGameTipsWithoutFilter(string.format("#c00ffffĐã đổi tên của bạn (%s) thành: %s", tostring(oldName), tostring(text)))
+                end, "Nhập tên mới cho bản thân")
+            else
+                ShowGameTipsWithoutFilter("#cFF0000Đã hủy thao tác!")
+            end
+        end
+    )
+end
+
+
+
+
+
 function pbsw()
 local DeathFrameCtrl, DeathFrameModel, DeathFrameView = GetInst("MiniUIManager"):GetMVC("DeathFrameAutoGen")
 
@@ -11220,7 +11697,7 @@ function QQMusicTriggerCtrl:Start()
 
     self.define.leftInfos = {
         {
-            title = "功能①终止功能",
+            title = "QQ音乐功能菜单",
             type = self.model.LISTTYPE.RECOMMEND
         }
     }
@@ -11247,6 +11724,7 @@ end
 
 
 
+
 function QQMusicTriggerCtrl:RequestRecommendList()
 
     local recommendList = {
@@ -11262,7 +11740,12 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         {song_id = 20005},
         {song_id = 19997},
         {song_id = 30001},
-        {song_id = 30002}
+        {song_id = 30002},
+        {song_id = 19996},
+        {song_id = 40001},
+        {song_id = 40002},
+        {song_id = 40003},
+        {song_id = 40004}
     }
 
     self.model:SetMusicList(
@@ -11306,7 +11789,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- INACTIVE SEPARATOR
+    -- CATEGORY 2: SPECIAL (INACTIVE SEPARATOR)
     self.model:AddDetailMusic({
         song_id = 19999,
         song_name = "功能②特殊",
@@ -11387,7 +11870,52 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- Refresh the visible RECOMMEND list.
+    -- CATEGORY 4: NAME AND OTHER (INACTIVE SEPARATOR)
+    self.model:AddDetailMusic({
+        song_id = 19996,
+        song_name = "名称及其他|类别④",
+        singer_name = "Category",
+        song_play_time = 0,
+        playable = 0
+    })
+
+    -- NAME FUNCTION 1
+    self.model:AddDetailMusic({
+        song_id = 40001,
+        song_name = "创作者姓名",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
+    -- NAME FUNCTION 2
+    self.model:AddDetailMusic({
+        song_id = 40002,
+        song_name = "选择你自己的名字",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
+    -- NAME DISPLAY FUNCTION 1
+    self.model:AddDetailMusic({
+        song_id = 40003,
+        song_name = "彩虹标题",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
+    -- NAME DISPLAY FUNCTION 2
+    self.model:AddDetailMusic({
+        song_id = 40004,
+        song_name = "标题",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
+    -- Refresh the visible RECOMMEND list
     self.view:RefreshMusicList(
         recommendList,
         self.model.LISTTYPE.RECOMMEND
@@ -11410,6 +11938,7 @@ end
 
 
 -- ==================== SECTION 4: MENU CLICK HANDLER ====================
+
 
 
 
@@ -11439,7 +11968,7 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
         return
     end
 
-    -- INACTIVE SEPARATOR
+    -- CATEGORY 2: SPECIAL (INACTIVE SEPARATOR)
     if song_id == 19999 or song_id == "19999" then
         return
     end
@@ -11488,6 +12017,35 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
     -- BLOCK FUNCTION 2
     if song_id == 30002 or song_id == "30002" then
         block_pct2()
+        return
+    end
+
+    -- CATEGORY 4: NAME AND OTHER (INACTIVE SEPARATOR)
+    if song_id == 19996 or song_id == "19996" then
+        return
+    end
+
+    -- NAME FUNCTION 1
+    if song_id == 40001 or song_id == "40001" then
+        name_pct1()
+        return
+    end
+
+    -- NAME FUNCTION 2
+    if song_id == 40002 or song_id == "40002" then
+        name_pct2()
+        return
+    end
+
+    -- NAME DISPLAY FUNCTION 1
+    if song_id == 40003 or song_id == "40003" then
+        name_pcto1()
+        return
+    end
+
+    -- NAME DISPLAY FUNCTION 2
+    if song_id == 40004 or song_id == "40004" then
+        name_pcto2()
         return
     end
 
