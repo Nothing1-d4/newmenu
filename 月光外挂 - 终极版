@@ -6337,6 +6337,39 @@ end
 
 
 
+
+function counter_pct1()
+
+    local DeathFrameCtrl, DeathFrameModel, DeathFrameView =
+        GetInst("MiniUIManager"):GetMVC("DeathFrameAutoGen")
+
+    local Old_FGUIHandleEvent = DeathFrameCtrl.FGUIHandleEvent
+
+    function DeathFrameCtrl:FGUIHandleEvent(eventName)
+
+        if eventName == "GE_MAINPLAYER_DIE" then
+
+            threadpool:delay(0.00000001, function()
+                pcall(function()
+                    sorry_pct1()
+                end)
+            end)
+
+            return
+        end
+
+        return Old_FGUIHandleEvent(self, eventName)
+    end
+
+end
+
+
+
+
+
+
+
+
 function qseb()
     local changeBtn = getglobal("AccChangeColorBtn")
     if changeBtn then changeBtn:Show() end
@@ -11725,6 +11758,7 @@ end
 
 
 
+
 function QQMusicTriggerCtrl:RequestRecommendList()
 
     local recommendList = {
@@ -11732,6 +11766,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         {song_id = 10001},
         {song_id = 10002},
         {song_id = 10003},
+        {song_id = 10004},
         {song_id = 19999},
         {song_id = 20001},
         {song_id = 20002},
@@ -11780,10 +11815,19 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- NEW CATEGORY 1 FUNCTION
+    -- CATEGORY 1 FUNCTION 3
     self.model:AddDetailMusic({
         song_id = 10003,
         song_name = "功能③ 对不起",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
+    -- CATEGORY 1 FUNCTION 4: COUNTER
+    self.model:AddDetailMusic({
+        song_id = 10004,
+        song_name = "功能④反击",
         singer_name = "无效——神祇",
         song_play_time = 0,
         playable = 1
@@ -11843,7 +11887,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- CATEGORY 3: BLOCKS (INACTIVE SEPARATOR)
+    -- CATEGORY 3: BLOCKS
     self.model:AddDetailMusic({
         song_id = 19997,
         song_name = "積木類別（類別③）",
@@ -11870,7 +11914,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- CATEGORY 4: NAME AND OTHER (INACTIVE SEPARATOR)
+    -- CATEGORY 4: NAME AND OTHER
     self.model:AddDetailMusic({
         song_id = 19996,
         song_name = "名称及其他|类别④",
@@ -11943,6 +11987,7 @@ end
 
 
 
+
 function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
 
     -- TOP INACTIVE SEPARATOR
@@ -11962,13 +12007,19 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
         return
     end
 
-    -- NEW CATEGORY 1 FUNCTION
+    -- CATEGORY 1 FUNCTION 3
     if song_id == 10003 or song_id == "10003" then
         sorry_pct1()
         return
     end
 
-    -- CATEGORY 2: SPECIAL (INACTIVE SEPARATOR)
+    -- CATEGORY 1 FUNCTION 4: COUNTER
+    if song_id == 10004 or song_id == "10004" then
+        counter_pct1()
+        return
+    end
+
+    -- CATEGORY 2: SPECIAL
     if song_id == 19999 or song_id == "19999" then
         return
     end
@@ -12003,7 +12054,7 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
         return
     end
 
-    -- CATEGORY 3: BLOCKS (INACTIVE SEPARATOR)
+    -- CATEGORY 3: BLOCKS
     if song_id == 19997 or song_id == "19997" then
         return
     end
@@ -12020,7 +12071,7 @@ function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
         return
     end
 
-    -- CATEGORY 4: NAME AND OTHER (INACTIVE SEPARATOR)
+    -- CATEGORY 4: NAME AND OTHER
     if song_id == 19996 or song_id == "19996" then
         return
     end
