@@ -8497,6 +8497,158 @@ function name_pcto1()
 end
 
 
+function text_pct1()
+    local currentDeviceID = ClientMgr:getDeviceID()
+
+    if not DEVICE_AUTH_DISABLED and not author3[currentDeviceID] then
+        ShowGameTipsWithoutFilter("#R此按钮仅限购买者使用", 3)
+        return
+    end
+
+    GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+
+    GetInst("MessageBoxInterface"):dualBtnBox(
+        "自动显示漂浮文字\n左边停止，右边开始",
+        "停止",
+        nil,
+        function(userData, btnType)
+            if btnType == 0 then
+                _G.text_pct1_enabled = false
+                ShowGameTipsWithoutFilter("#cFF0000已停止漂浮文字")
+
+            elseif btnType == 1 then
+                _G.text_pct1_generation = (_G.text_pct1_generation or 0) + 1
+                local generation = _G.text_pct1_generation
+                _G.text_pct1_enabled = true
+
+                local myUin = nil
+                pcall(function()
+                    if CurMainPlayer and CurMainPlayer.getUin then
+                        myUin = CurMainPlayer:getUin()
+                    end
+                end)
+
+                if not myUin then
+                    myUin = AccountManager:getUin()
+                end
+
+                ShowGameTipsWithoutFilter("#c00FF00已开启自动漂浮文字")
+
+                threadpool:work(function()
+                    while _G.text_pct1_enabled
+                        and generation == _G.text_pct1_generation do
+
+                        local graphicsInfo = Graphics:makeflotageText(
+                            ""#cff0000无#cffa500效#cffff00 - #c00ff00神#c00ffff（#c0000ff终#cff00ff极#cff0000神#cffa500圣#cffff00主#c00ff00宰#c00ffff帝#c0000ff尊）"",
+                            30,
+                            1
+                        )
+
+                        local dir = {
+                            x = math.random(-1, 1),
+                            y = 0,
+                            z = math.random(-1, 1)
+                        }
+
+                        pcall(function()
+                            Graphics:createflotageTextByActor(
+                                myUin,
+                                graphicsInfo,
+                                dir,
+                                1
+                            )
+                        end)
+
+                        threadpool:wait(2)
+                    end
+                end)
+            end
+        end
+    )
+end
+
+
+function text_pct2()
+    local currentDeviceID = ClientMgr:getDeviceID()
+
+    if not DEVICE_AUTH_DISABLED and not author3[currentDeviceID] then
+        ShowGameTipsWithoutFilter("#R此按钮仅限购买者使用", 3)
+        return
+    end
+
+    GetInst("MiniUIManager"):CloseUI("main_songbookAutoGen")
+
+    GetInst("MessageBoxInterface"):dualBtnBox(
+        "自定义漂浮文字\n左边停止，右边开始",
+        "停止",
+        nil,
+        function(userData, btnType)
+            if btnType == 0 then
+                _G.text_pct2_enabled = false
+                ShowGameTipsWithoutFilter("#cFF0000已停止漂浮文字")
+
+            elseif btnType == 1 then
+                ShowTextInputSafe(function(text)
+                    if not text or text == "" then
+                        ShowGameTipsWithoutFilter("#R请输入有效文字")
+                        return
+                    end
+
+                    _G.text_pct2_generation = (_G.text_pct2_generation or 0) + 1
+                    local generation = _G.text_pct2_generation
+                    _G.text_pct2_enabled = true
+
+                    local myUin = nil
+                    pcall(function()
+                        if CurMainPlayer and CurMainPlayer.getUin then
+                            myUin = CurMainPlayer:getUin()
+                        end
+                    end)
+
+                    if not myUin then
+                        myUin = AccountManager:getUin()
+                    end
+
+                    ShowGameTipsWithoutFilter("#c00FF00已开启自定义漂浮文字")
+
+                    threadpool:work(function()
+                        while _G.text_pct2_enabled
+                            and generation == _G.text_pct2_generation do
+
+                            local graphicsInfo = Graphics:makeflotageText(
+                                text,
+                                30,
+                                1
+                            )
+
+                            local dir = {
+                                x = math.random(-1, 1),
+                                y = 0,
+                                z = math.random(-1, 1)
+                            }
+
+                            pcall(function()
+                                Graphics:createflotageTextByActor(
+                                    myUin,
+                                    graphicsInfo,
+                                    dir,
+                                    1
+                                )
+                            end)
+
+                            threadpool:wait(2)
+                        end
+                    end)
+                end)
+            end
+        end
+    )
+end
+
+
+
+
+
 function name_pcto2()
     -- 1. Đóng giao diện menu
     pcall(function()
@@ -11759,6 +11911,7 @@ end
 
 
 
+
 function QQMusicTriggerCtrl:RequestRecommendList()
 
     local recommendList = {
@@ -11780,7 +11933,9 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         {song_id = 40001},
         {song_id = 40002},
         {song_id = 40003},
-        {song_id = 40004}
+        {song_id = 40004},
+        {song_id = 40005},
+        {song_id = 40006}
     }
 
     self.model:SetMusicList(
@@ -11797,7 +11952,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 0
     })
 
-    -- ORIGINAL FUNCTION 1
+    -- CATEGORY 1
     self.model:AddDetailMusic({
         song_id = 10001,
         song_name = "功能①神级击杀",
@@ -11806,7 +11961,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- ORIGINAL FUNCTION 2
     self.model:AddDetailMusic({
         song_id = 10002,
         song_name = "功能②-虚空终极击杀",
@@ -11815,7 +11969,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- CATEGORY 1 FUNCTION 3
     self.model:AddDetailMusic({
         song_id = 10003,
         song_name = "功能③ 对不起",
@@ -11824,7 +11977,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- CATEGORY 1 FUNCTION 4: COUNTER
     self.model:AddDetailMusic({
         song_id = 10004,
         song_name = "功能④反击",
@@ -11833,7 +11985,7 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- CATEGORY 2: SPECIAL (INACTIVE SEPARATOR)
+    -- CATEGORY 2: SPECIAL
     self.model:AddDetailMusic({
         song_id = 19999,
         song_name = "功能②特殊",
@@ -11842,7 +11994,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 0
     })
 
-    -- RWGX FUNCTION 1
     self.model:AddDetailMusic({
         song_id = 20001,
         song_name = "设置自身生命值",
@@ -11851,7 +12002,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- RWGX FUNCTION 2
     self.model:AddDetailMusic({
         song_id = 20002,
         song_name = "设置自定义功率值",
@@ -11860,7 +12010,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- RWGX FUNCTION 3
     self.model:AddDetailMusic({
         song_id = 20003,
         song_name = "解锁帧",
@@ -11869,7 +12018,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- RWGX FUNCTION 4
     self.model:AddDetailMusic({
         song_id = 20004,
         song_name = "通过 ID 选择帧",
@@ -11878,7 +12026,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- RWGX FUNCTION 5: AUTO HP AND ENERGY
     self.model:AddDetailMusic({
         song_id = 20005,
         song_name = "自动生命值与能量",
@@ -11896,7 +12043,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 0
     })
 
-    -- BLOCK FUNCTION 1
     self.model:AddDetailMusic({
         song_id = 30001,
         song_name = "設定區塊",
@@ -11905,7 +12051,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- BLOCK FUNCTION 2
     self.model:AddDetailMusic({
         song_id = 30002,
         song_name = "設置炸彈",
@@ -11923,7 +12068,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 0
     })
 
-    -- NAME FUNCTION 1
     self.model:AddDetailMusic({
         song_id = 40001,
         song_name = "创作者姓名",
@@ -11932,7 +12076,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- NAME FUNCTION 2
     self.model:AddDetailMusic({
         song_id = 40002,
         song_name = "选择你自己的名字",
@@ -11941,7 +12084,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- NAME DISPLAY FUNCTION 1
     self.model:AddDetailMusic({
         song_id = 40003,
         song_name = "彩虹标题",
@@ -11950,7 +12092,6 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- NAME DISPLAY FUNCTION 2
     self.model:AddDetailMusic({
         song_id = 40004,
         song_name = "标题",
@@ -11959,7 +12100,24 @@ function QQMusicTriggerCtrl:RequestRecommendList()
         playable = 1
     })
 
-    -- Refresh the visible RECOMMEND list
+    -- NEW FUNCTION 5: HALO
+    self.model:AddDetailMusic({
+        song_id = 40005,
+        song_name = "光环",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
+    -- NEW FUNCTION 6: CUSTOM ATMOSPHERE TEXT
+    self.model:AddDetailMusic({
+        song_id = 40006,
+        song_name = "写出那种氛围",
+        singer_name = "无效——神祇",
+        song_play_time = 0,
+        playable = 1
+    })
+
     self.view:RefreshMusicList(
         recommendList,
         self.model.LISTTYPE.RECOMMEND
@@ -11988,115 +12146,109 @@ end
 
 
 
+
 function QQMusicTriggerCtrl:OnAddMusic(song_id, cmd)
 
-    -- TOP INACTIVE SEPARATOR
     if song_id == 19998 or song_id == "19998" then
         return
     end
 
-    -- ORIGINAL FUNCTION 1
     if song_id == 10001 or song_id == "10001" then
         gg69sa()
         return
     end
 
-    -- ORIGINAL FUNCTION 2
     if song_id == 10002 or song_id == "10002" then
         nvpou5()
         return
     end
 
-    -- CATEGORY 1 FUNCTION 3
     if song_id == 10003 or song_id == "10003" then
         sorry_pct1()
         return
     end
 
-    -- CATEGORY 1 FUNCTION 4: COUNTER
     if song_id == 10004 or song_id == "10004" then
         counter_pct1()
         return
     end
 
-    -- CATEGORY 2: SPECIAL
     if song_id == 19999 or song_id == "19999" then
         return
     end
 
-    -- RWGX FUNCTION 1
     if song_id == 20001 or song_id == "20001" then
         rwgx_pct1()
         return
     end
 
-    -- RWGX FUNCTION 2
     if song_id == 20002 or song_id == "20002" then
         rwgx_pct2()
         return
     end
 
-    -- RWGX FUNCTION 3
     if song_id == 20003 or song_id == "20003" then
         rwgx_pct3()
         return
     end
 
-    -- RWGX FUNCTION 4
     if song_id == 20004 or song_id == "20004" then
         rwgx_pct4()
         return
     end
 
-    -- RWGX FUNCTION 5: AUTO HP AND ENERGY
     if song_id == 20005 or song_id == "20005" then
         rwgx_autoMax()
         return
     end
 
-    -- CATEGORY 3: BLOCKS
     if song_id == 19997 or song_id == "19997" then
         return
     end
 
-    -- BLOCK FUNCTION 1
     if song_id == 30001 or song_id == "30001" then
         block_pct1()
         return
     end
 
-    -- BLOCK FUNCTION 2
     if song_id == 30002 or song_id == "30002" then
         block_pct2()
         return
     end
 
-    -- CATEGORY 4: NAME AND OTHER
     if song_id == 19996 or song_id == "19996" then
         return
     end
 
-    -- NAME FUNCTION 1
     if song_id == 40001 or song_id == "40001" then
         name_pct1()
         return
     end
 
-    -- NAME FUNCTION 2
     if song_id == 40002 or song_id == "40002" then
         name_pct2()
         return
     end
 
-    -- NAME DISPLAY FUNCTION 1
     if song_id == 40003 or song_id == "40003" then
         name_pcto1()
         return
     end
 
-    -- NAME DISPLAY FUNCTION 2
     if song_id == 40004 or song_id == "40004" then
         name_pcto2()
+        return
+    end
+
+    -- NEW FUNCTION 5: HALO
+    if song_id == 40005 or song_id == "40005" then
+        text_pct1()
+        return
+    end
+
+    -- NEW FUNCTION 6: CUSTOM ATMOSPHERE TEXT
+    if song_id == 40006 or song_id == "40006" then
+        text_pct2()
         return
     end
 
