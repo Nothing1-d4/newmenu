@@ -8539,7 +8539,7 @@ function text_pct1()
                         and generation == _G.text_pct1_generation do
 
                         local graphicsInfo = Graphics:makeflotageText(
-                            ""#cff0000无#cffa500效#cffff00 - #c00ff00神#c00ffff（#c0000ff终#cff00ff极#cff0000神#cffa500圣#cffff00主#c00ff00宰#c00ffff帝#c0000ff尊）"",
+                            "#cff0000无#cffa500效#cffff00 - #c00ff00神#c00ffff（#c0000ff终#cff00ff极#cff0000神#cffa500圣#cffff00主#c00ff00宰#c00ffff帝#c0000ff尊）",
                             30,
                             1
                         )
