@@ -8497,6 +8497,8 @@ function name_pcto1()
 end
 
 
+
+
 function text_pct1()
     local currentDeviceID = ClientMgr:getDeviceID()
 
@@ -8512,6 +8514,7 @@ function text_pct1()
         "停止",
         nil,
         function(userData, btnType)
+
             if btnType == 0 then
                 _G.text_pct1_enabled = false
                 ShowGameTipsWithoutFilter("#cFF0000已停止漂浮文字")
@@ -8522,6 +8525,7 @@ function text_pct1()
                 _G.text_pct1_enabled = true
 
                 local myUin = nil
+
                 pcall(function()
                     if CurMainPlayer and CurMainPlayer.getUin then
                         myUin = CurMainPlayer:getUin()
@@ -8530,6 +8534,12 @@ function text_pct1()
 
                 if not myUin then
                     myUin = AccountManager:getUin()
+                end
+
+                if not myUin then
+                    _G.text_pct1_enabled = false
+                    ShowGameTipsWithoutFilter("#R无法获取自己的UIN")
+                    return
                 end
 
                 ShowGameTipsWithoutFilter("#c00FF00已开启自动漂浮文字")
@@ -8545,19 +8555,29 @@ function text_pct1()
                         )
 
                         local dir = {
-                            x = math.random(-1, 1),
-                            y = 0,
-                            z = math.random(-1, 1)
+                            x = 0,
+                            y = 1,
+                            z = 0
                         }
 
-                        pcall(function()
+                        local ok, err = pcall(function()
                             Graphics:createflotageTextByActor(
                                 myUin,
                                 graphicsInfo,
                                 dir,
-                                1
+                                100
                             )
+
+                            Graphics:snycGraphicsInfo2Client()
                         end)
+
+                        if not ok then
+                            _G.text_pct1_enabled = false
+                            ShowGameTipsWithoutFilter(
+                                "#R漂浮文字错误: " .. tostring(err)
+                            )
+                            break
+                        end
 
                         threadpool:wait(2)
                     end
@@ -8566,6 +8586,9 @@ function text_pct1()
         end
     )
 end
+
+
+
 
 
 function text_pct2()
@@ -8583,12 +8606,14 @@ function text_pct2()
         "停止",
         nil,
         function(userData, btnType)
+
             if btnType == 0 then
                 _G.text_pct2_enabled = false
                 ShowGameTipsWithoutFilter("#cFF0000已停止漂浮文字")
 
             elseif btnType == 1 then
                 ShowTextInputSafe(function(text)
+
                     if not text or text == "" then
                         ShowGameTipsWithoutFilter("#R请输入有效文字")
                         return
@@ -8599,6 +8624,7 @@ function text_pct2()
                     _G.text_pct2_enabled = true
 
                     local myUin = nil
+
                     pcall(function()
                         if CurMainPlayer and CurMainPlayer.getUin then
                             myUin = CurMainPlayer:getUin()
@@ -8607,6 +8633,12 @@ function text_pct2()
 
                     if not myUin then
                         myUin = AccountManager:getUin()
+                    end
+
+                    if not myUin then
+                        _G.text_pct2_enabled = false
+                        ShowGameTipsWithoutFilter("#R无法获取自己的UIN")
+                        return
                     end
 
                     ShowGameTipsWithoutFilter("#c00FF00已开启自定义漂浮文字")
@@ -8622,19 +8654,29 @@ function text_pct2()
                             )
 
                             local dir = {
-                                x = math.random(-1, 1),
-                                y = 0,
-                                z = math.random(-1, 1)
+                                x = 0,
+                                y = 1,
+                                z = 0
                             }
 
-                            pcall(function()
+                            local ok, err = pcall(function()
                                 Graphics:createflotageTextByActor(
                                     myUin,
                                     graphicsInfo,
                                     dir,
-                                    1
+                                    100
                                 )
+
+                                Graphics:snycGraphicsInfo2Client()
                             end)
+
+                            if not ok then
+                                _G.text_pct2_enabled = false
+                                ShowGameTipsWithoutFilter(
+                                    "#R漂浮文字错误: " .. tostring(err)
+                                )
+                                break
+                            end
 
                             threadpool:wait(2)
                         end
